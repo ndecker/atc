@@ -123,7 +123,7 @@ func (p Position) Direction(p2 Position) (d Direction, valid bool) {
 }
 
 func (p Position) Distance(p2 Position) int {
-    // diagonal has unity distance => sqrt(2) = 1
+	// diagonal has unity distance => sqrt(2) = 1
 	dx, dy := p2.x-p.x, p2.y-p.y
-    return Max(Abs(dx), Abs(dy))
+	return Max(Abs(dx), Abs(dy))
 }

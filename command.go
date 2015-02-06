@@ -41,8 +41,8 @@ func (c *Command) Apply(p *Plane) string {
 		res = p.DoTurn(0)
 	case 'H': // hold at navaid
 		res = p.DoHold()
-    case 'K': // keep position
-        res = p.DoKeep()
+	case 'K': // keep position
+		res = p.DoKeep()
 	case '%', '=':
 		res = p.TurnAtNavaid(c.command)
 	default:
@@ -65,13 +65,6 @@ type CommandInterpreter struct {
 }
 
 func (ci *CommandInterpreter) KeyPressed(key rune) {
-	if len(ci.buf) == 0 && key == ' ' {
-		ci.buf = ""
-		ci.last = ""
-		ci.reply = ""
-		return
-	}
-
 	ci.buf += string(key)
 	ci.try_command()
 }
@@ -119,7 +112,7 @@ func (ci *CommandInterpreter) try_command() {
 		ci.reply = "-----------"
 	} else {
 		ci.reply = cmd.Apply(plane)
-        ci.game.last_commanded_plane = plane
+		ci.game.last_commanded_plane = plane
 	}
 
 }

@@ -31,6 +31,19 @@ const (
         .........................
         .....8........5.....6....
     `
+
+	// Entry Fix  Initial Heading  Exit Fix
+	// 0          E                9
+	// 1          S                8
+	// 2          SE               7
+	// 3          S                6
+	// 4          SE               5
+	// 5          NW               4
+	// 6          N                3
+	// 7          NW               2
+	// 8          N                1
+	// 9          W                0
+
 	// TODO: =-= %-% nur Prop
 	DEFAULT_ROUTES = `
         4: 0-9 9-0
@@ -216,18 +229,18 @@ func ParseBoard(s string, rs string) *Board {
 				continue
 			}
 
-            route := Route{
-					entry: rune(r[0]),
-					exit:  rune(r[2]),
-            }
-            _, ok_entry := b.entrypoints[route.entry]
-            _, ok_exit := b.entrypoints[route.exit]
-            if !ok_entry || !ok_exit {
-                panic("unknown entrypoint: " + string(route.entry) + " or " + string(route.exit))
-            }
+			route := Route{
+				entry: rune(r[0]),
+				exit:  rune(r[2]),
+			}
+			_, ok_entry := b.entrypoints[route.entry]
+			_, ok_exit := b.entrypoints[route.exit]
+			if !ok_entry || !ok_exit {
+				panic("unknown entrypoint: " + string(route.entry) + " or " + string(route.exit))
+			}
 			for n := 0; n < weight; n += 1 {
 				b.routes = append(b.routes, route)
-            }
+			}
 
 		}
 

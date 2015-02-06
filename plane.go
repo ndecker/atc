@@ -4,8 +4,6 @@ import (
 	"fmt"
 )
 
-// TODO: fuel: jet 15m prop 21m
-
 type PlaneState int
 
 const (
@@ -22,7 +20,7 @@ const SAFE_DISTANCE = 3
 
 type Plane struct {
 	callsign rune
-    typ *PlaneType
+	typ      *PlaneType
 
 	entry *EntryPoint
 	exit  *EntryPoint
@@ -32,14 +30,14 @@ type Plane struct {
 	wait_ticks Ticks
 
 	Position
-    is_hoovering bool
+	is_hoovering bool
 
 	Direction
 	want_turn int
 
 	height         int
 	want_height    int
-    last_height    int
+	last_height    int
 	initial_height int
 
 	hold_at_navaid      bool
@@ -53,7 +51,7 @@ func (p *Plane) Tick(game *GameState) {
 		return
 	}
 
-    p.last_height = p.height
+	p.last_height = p.height
 
 	switch p.state {
 	case StatePending:
@@ -65,24 +63,24 @@ func (p *Plane) Tick(game *GameState) {
 				p.wait_ticks = p.typ.ticks_pending
 				p.height = p.initial_height
 
-                var dir Direction
-                var valid bool
-                switch p.exit.class {
-                case TypeRoute:
-                    dir, valid = p.entry.Position.Direction(p.exit.Position)
-                    if !valid {
-                        panic("invalid direction")
-                    }
-                case TypeAirport:
-                    // find valid beacon
-                    for _, b := range(game.board.beacons) {
-                        dir, valid = p.entry.Position.Direction(b.Position)
-                        if valid {
-                            break
-                        }
-                    }
-                }
-                p.Direction = dir
+				var dir Direction
+				var valid bool
+				switch p.exit.class {
+				case TypeRoute:
+					dir, valid = p.entry.Position.Direction(p.exit.Position)
+					if !valid {
+						panic("invalid direction")
+					}
+				case TypeAirport:
+					// find valid beacon
+					for _, b := range game.board.beacons {
+						dir, valid = p.entry.Position.Direction(b.Position)
+						if valid {
+							break
+						}
+					}
+				}
+				p.Direction = dir
 
 			case TypeAirport:
 				p.state = StateWaiting
@@ -99,7 +97,7 @@ func (p *Plane) Tick(game *GameState) {
 
 	case StateWaiting: // wait for DoHeight
 	case StateRolling: // after wait ticks
-        p.UpdatePosition(game)
+		p.UpdatePosition(game)
 		p.ApplyWants()
 
 		p.state = StateFlying
@@ -122,7 +120,7 @@ func (p *Plane) Tick(game *GameState) {
 		p.UpdatePosition(game)
 		p.ApplyWants()
 
-        p.wait_ticks = p.typ.ticks_per_move -1
+		p.wait_ticks = p.typ.ticks_per_move - 1
 	case StateAway:
 	default:
 		panic("unhandled case")
@@ -131,22 +129,22 @@ func (p *Plane) Tick(game *GameState) {
 }
 
 func (p *Plane) Collides(p2 *Plane) bool {
-    height_match := false
+	height_match := false
 
-    if p.height == p2.height {
-        // same height
-        height_match = true
-    } else if p.height == p2.last_height && p.last_height == p2.height{
-        // crossover
-        height_match = true
-    }
+	if p.height == p2.height {
+		// same height
+		height_match = true
+	} else if p.height == p2.last_height && p.last_height == p2.height {
+		// crossover
+		height_match = true
+	}
 
-    if !height_match {
-        return false
-    }
+	if !height_match {
+		return false
+	}
 
-    distance := p.Position.Distance(p2.Position)
-    return distance < SAFE_DISTANCE
+	distance := p.Position.Distance(p2.Position)
+	return distance < SAFE_DISTANCE
 }
 
 func (p *Plane) ApplyWants() {
@@ -168,12 +166,12 @@ func (p *Plane) ApplyWants() {
 }
 
 func (p *Plane) UpdatePosition(game *GameState) {
-    var next_pos Position
-    if !p.is_hoovering {
-        next_pos = p.Position.Move(p.Direction, 1)
-    } else {
-        next_pos = p.Position
-    }
+	var next_pos Position
+	if !p.is_hoovering {
+		next_pos = p.Position.Move(p.Direction, 1)
+	} else {
+		next_pos = p.Position
+	}
 
 	if !game.board.Contains(next_pos) {
 		// left the playing field
@@ -197,10 +195,10 @@ func (p *Plane) UpdatePosition(game *GameState) {
 				return
 			}
 
-            if !p.is_hoovering {
-                // if hoovering over the airport do not reset to flying
-                p.state = StateFlying
-            }
+			if !p.is_hoovering {
+				// if hoovering over the airport do not reset to flying
+				p.state = StateFlying
+			}
 		}
 	}
 	p.Position = next_pos
@@ -211,12 +209,12 @@ func (p *Plane) DoTurn(c int) bool {
 		return false
 	}
 
-    if p.typ.immediate_turn {
-        p.Direction = p.Direction.Right(c)
-        p.want_turn = 0
-    } else {
-        p.want_turn = c
-    }
+	if p.typ.immediate_turn {
+		p.Direction = p.Direction.Right(c)
+		p.want_turn = 0
+	} else {
+		p.want_turn = c
+	}
 	p.is_circling = false
 	p.hold_at_navaid = false
 	return true
@@ -252,11 +250,11 @@ func (p *Plane) DoHold() bool {
 }
 
 func (p *Plane) DoKeep() bool {
-    if !p.typ.can_hoover {
-        return false
-    }
-    p.is_hoovering = !p.is_hoovering
-    return true
+	if !p.typ.can_hoover {
+		return false
+	}
+	p.is_hoovering = !p.is_hoovering
+	return true
 }
 
 func (p *Plane) TurnAtNavaid(navaid rune) bool {
@@ -296,38 +294,38 @@ func (p Plane) Marker() string {
 }
 
 func (p Plane) State() string {
-    res := fmt.Sprintf("%c%d%c %c-%c %s",
-        p.callsign, p.height, p.typ.mark, p.entry.sign, p.exit.sign, p.Direction)
+	res := fmt.Sprintf("%c%d%c %c-%c %s",
+		p.callsign, p.height, p.typ.mark, p.entry.sign, p.exit.sign, p.Direction)
 
-    if p.is_hoovering {
-        res += " +H+ "
-    }
+	if p.is_hoovering {
+		res += " +H+ "
+	}
 
-    // height not shown on approach
-    show_height := p.want_height != p.height && p.state != StateAproach
-    show_dir    := p.want_turn != 0
+	// height not shown on approach
+	show_height := p.want_height != p.height && p.state != StateAproach
+	show_dir := p.want_turn != 0
 
-    if show_height && show_dir {
-        res += fmt.Sprintf(" [%s %d]",
-            p.Direction.Right(p.want_turn),
-            p.want_height)
-    } else if show_height {
-        res += fmt.Sprintf(" [%d]", p.want_height)
-    } else if show_dir {
-        res += fmt.Sprintf(" [%s]",
-            p.Direction.Right(p.want_turn))
-    }
+	if show_height && show_dir {
+		res += fmt.Sprintf(" [%s %d]",
+			p.Direction.Right(p.want_turn),
+			p.want_height)
+	} else if show_height {
+		res += fmt.Sprintf(" [%d]", p.want_height)
+	} else if show_dir {
+		res += fmt.Sprintf(" [%s]",
+			p.Direction.Right(p.want_turn))
+	}
 
-    switch p.state {
-    case StateWaiting:
-        res += " -- Awaiting Takeoff --"
-    case StateRolling:
-        res += " -- Rolling --"
-    case StateAproach:
-        res += " -- Final Approach --"
-    }
+	switch p.state {
+	case StateWaiting:
+		res += " -- Awaiting Takeoff --"
+	case StateRolling:
+		res += " -- Rolling --"
+	case StateAproach:
+		res += " -- Final Approach --"
+	}
 
-    return res
+	return res
 }
 
 type ByTime []*Plane

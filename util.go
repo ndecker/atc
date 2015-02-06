@@ -1,22 +1,22 @@
 package main
 
 import (
-    "time"
 	crand "crypto/rand"
+	"time"
 )
 
 func Abs(i int) int {
-    if i < 0 {
-        return -i
-    }
-    return i
+	if i < 0 {
+		return -i
+	}
+	return i
 }
 
 func Max(a int, b int) int {
-    if a > b {
-        return a
-    }
-    return b
+	if a > b {
+		return a
+	}
+	return b
 }
 
 func MakeTicker() (ticks chan struct{}, closer chan struct{}) {
@@ -24,20 +24,20 @@ func MakeTicker() (ticks chan struct{}, closer chan struct{}) {
 	closer = make(chan struct{}, 0)
 
 	go func() {
-        defer close(ticks)
+		defer close(ticks)
 		for {
-            time.Sleep(time.Duration(SECONDS_PER_TICK) * time.Second)
+			time.Sleep(time.Duration(SECONDS_PER_TICK) * time.Second)
 
-            select {
-            case <-closer:
-                return
-            default:
-                ticks <- struct{}{}
-            }
+			select {
+			case <-closer:
+				return
+			default:
+				ticks <- struct{}{}
+			}
 		}
 	}()
 
-    return
+	return
 }
 
 func RandSeed() int64 {
@@ -47,5 +47,5 @@ func RandSeed() int64 {
 		panic(err)
 	}
 	var seed int64 = int64(rbuf[0])<<24 + int64(rbuf[1])<<16 + int64(rbuf[2])<<8 + int64(rbuf[3])
-    return seed
+	return seed
 }

@@ -10,13 +10,13 @@ import (
 )
 
 var (
-    sigterm chan os.Signal = make(chan os.Signal, 1)
-	events chan termbox.Event = make(chan termbox.Event, 0)
+	sigterm chan os.Signal     = make(chan os.Signal, 1)
+	events  chan termbox.Event = make(chan termbox.Event, 0)
 )
 
 func DrawGame(game *GameState) {
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-    _, termh := termbox.Size()
+	_, termh := termbox.Size()
 
 	for x := 0; x < game.board.width; x += 1 {
 		for y := 0; y < game.board.height; y += 1 {
@@ -35,14 +35,14 @@ func DrawGame(game *GameState) {
 		print(b.Position.x*2, b.Position.y, "*")
 	}
 
-    col := game.board.width * 2 + 2
+	col := game.board.width*2 + 2
 	row := 0
 
 	for _, p := range game.planes {
-        if row >= termh {
-            row = 0
-            col += 10
-        }
+		if row >= termh {
+			row = 0
+			col += 10
+		}
 
 		// TODO: two column?
 		if p.IsVisible() {
@@ -59,13 +59,13 @@ func DrawGame(game *GameState) {
 		}
 	}
 
-    if game.last_commanded_plane != nil {
-        // always show last commanded plane on top
-        p := game.last_commanded_plane
-        if p.IsFlying() {
+	if game.last_commanded_plane != nil {
+		// always show last commanded plane on top
+		p := game.last_commanded_plane
+		if p.IsFlying() {
 			print(p.Position.x*2, p.Position.y, p.Marker())
-        }
-    }
+		}
+	}
 
 	// TODO: dynamic positions
 	print(0, 21, game.clock.String())
@@ -87,11 +87,9 @@ func print(x, y int, args ...interface{}) {
 	}
 }
 
-
 func GameLoop(game *GameState) {
-    ticks, close_ticks := MakeTicker()
-    defer close(close_ticks)
-
+	ticks, close_ticks := MakeTicker()
+	defer close(close_ticks)
 
 	for {
 		DrawGame(game)
@@ -108,9 +106,9 @@ func GameLoop(game *GameState) {
 					switch ev.Key {
 					case termbox.KeyEsc, termbox.KeyCtrlC:
 						return // end game
-					case termbox.KeySpace:
-						game.ci.KeyPressed(' ')
-					case termbox.KeyBackspace, termbox.KeyBackspace2:
+					case termbox.KeySpace,
+						termbox.KeyEnter,
+						termbox.KeyBackspace, termbox.KeyBackspace2:
 						game.ci.Clear()
 					}
 				case ',':
@@ -137,7 +135,6 @@ func GameLoop(game *GameState) {
 func main() {
 	signal.Notify(sigterm, syscall.SIGTERM)
 
-
 	err := termbox.Init()
 	if err != nil {
 		panic(err)
@@ -151,22 +148,23 @@ func main() {
 		}
 	}()
 
-    for {
-        seed := RandSeed()
-        seed = 0
-        game := NewGame(DEFAULT_SETUP, seed)
-        GameLoop(game)
+	for {
+		seed := RandSeed()
+		seed = 0
+
+		game := NewGame(DEFAULT_SETUP, seed)
+		GameLoop(game)
 
 		ev := <-events
-        switch ev.Type {
-        case termbox.EventKey:
-            switch ev.Ch {
-            case 0:
-                switch ev.Key {
-                case termbox.KeyEsc, termbox.KeyCtrlC:
-                    return // end game
-                }
-            }
-        }
-    }
+		switch ev.Type {
+		case termbox.EventKey:
+			switch ev.Ch {
+			case 0:
+				switch ev.Key {
+				case termbox.KeyEsc, termbox.KeyCtrlC:
+					return // end game
+				}
+			}
+		}
+	}
 }
