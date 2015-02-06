@@ -2,7 +2,6 @@ package main
 
 import (
 	crand "crypto/rand"
-	"time"
 )
 
 func Abs(i int) int {
@@ -17,27 +16,6 @@ func Max(a int, b int) int {
 		return a
 	}
 	return b
-}
-
-func MakeTicker() (ticks chan struct{}, closer chan struct{}) {
-	ticks = make(chan struct{}, 0)
-	closer = make(chan struct{}, 0)
-
-	go func() {
-		defer close(ticks)
-		for {
-			time.Sleep(time.Duration(SECONDS_PER_TICK) * time.Second)
-
-			select {
-			case <-closer:
-				return
-			default:
-				ticks <- struct{}{}
-			}
-		}
-	}()
-
-	return
 }
 
 func RandSeed() int64 {

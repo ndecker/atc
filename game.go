@@ -13,12 +13,16 @@ type GameSetup struct {
 	last_plane_start Ticks
 
 	num_planes int
+
+	skip_to_next_tick bool // if true "," will skip to the beginning of the next tick
 }
 
 var DEFAULT_SETUP = GameSetup{
 	duration:         25 * Minutes,
 	last_plane_start: 15 * Minutes,
 	num_planes:       26,
+
+	skip_to_next_tick: true,
 }
 
 type GameState struct {

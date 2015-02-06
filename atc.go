@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 	"unicode"
 )
 
@@ -88,15 +89,17 @@ func print(x, y int, args ...interface{}) {
 }
 
 func GameLoop(game *GameState) {
-	ticks, close_ticks := MakeTicker()
-	defer close(close_ticks)
+	tick_time := time.Duration(SECONDS_PER_TICK) * time.Second
+	timer := time.NewTimer(tick_time)
+	defer timer.Stop()
 
 	for {
 		DrawGame(game)
 
 		select {
-		case <-ticks:
+		case <-timer.C:
 			game.Tick()
+			timer.Reset(tick_time)
 
 		case ev := <-events:
 			switch ev.Type {
@@ -113,6 +116,10 @@ func GameLoop(game *GameState) {
 					}
 				case ',':
 					game.Tick()
+
+					if game.setup.skip_to_next_tick {
+						timer.Reset(tick_time)
+					}
 				default:
 					game.ci.KeyPressed(unicode.ToUpper(ev.Ch))
 				}
@@ -150,7 +157,6 @@ func main() {
 
 	for {
 		seed := RandSeed()
-		seed = 0
 
 		game := NewGame(DEFAULT_SETUP, seed)
 		GameLoop(game)
