@@ -6,8 +6,6 @@ import (
 	"strings"
 )
 
-var _ = fmt.Printf
-
 const (
 	DEFAULT_BOARD = `
         .....1....2.........3....
@@ -32,30 +30,20 @@ const (
         .....8........5.....6....
     `
 
-	// Entry Fix  Initial Heading  Exit Fix
-	// 0          E                9
-	// 1          S                8
-	// 2          SE               7
-	// 3          S                6
-	// 4          SE               5
-	// 5          NW               4
-	// 6          N                3
-	// 7          NW               2
-	// 8          N                1
-	// 9          W                0
-
 	// TODO: =-= %-% nur Prop
+	// Format: weight: entry-exit-direction
 	DEFAULT_ROUTES = `
-        4: 0-9 9-0
-        4: 4-5 5-4
-        4: 1-8 8-1
-        4: 2-7 7-2
-        4: 3-6 6-3
-        1: 0-= 1-= 2-= 3-= 4-= 5-= 6-= 7-= 8-= 9-=
-        1: 0-% 1-% 2-% 3-% 4-% 5-% 6-% 7-% 8-% 9-%
-        1: =-0 =-1 =-2 =-3 =-4 =-5 =-6 =-7 =-8 =-9
-        1: %-0 %-1 %-2 %-3 %-4 %-5 %-6 %-7 %-8 %-9
-        1: =-= %-%
+        4: 0-9-E  9-0-W
+        4: 1-8-S  8-1-N
+        4: 2-7-SE 7-2-NW
+        4: 3-6-S  6-3-N
+        4: 4-5-SE 5-4-NW
+
+        1: 0-=-E  1-=-S  2-=-SE 3-=-S  4-=-SE 5-=-NW 6-=-N  7-=-NW 8-=-N  9-=-W
+        1: 0-%-E  1-%-S  2-%-SE 3-%-S  4-%-SE 5-%-NW 6-%-N  7-%-NW 8-%-N  9-%-W
+        1: =-0-W  =-1-W  =-2-W  =-3-W  =-4-W  =-5-W  =-6-W  =-7-W  =-8-W  =-9-W
+        1: %-0-NW %-1-NW %-2-NW %-3-NW %-4-NW %-5-NW %-6-NW %-7-NW %-8-NW %-9-NW
+        1: =-=-W  %-%-NW =-%-W %-=-NW
     `
 )
 
@@ -126,6 +114,7 @@ type Beacon struct {
 type Route struct {
 	entry rune
 	exit  rune
+	Direction
 }
 
 func (r Route) String() string {
@@ -213,9 +202,12 @@ func ParseBoard(s string, rs string) *Board {
 				continue
 			}
 
+			r_parts := strings.SplitN(r, "-", 3)
+
 			route := Route{
-				entry: rune(r[0]),
-				exit:  rune(r[2]),
+				entry:     rune(r_parts[0][0]),
+				exit:      rune(r_parts[1][0]),
+				Direction: ParseDirection(r_parts[2]),
 			}
 			_, ok_entry := b.entrypoints[route.entry]
 			_, ok_exit := b.entrypoints[route.exit]

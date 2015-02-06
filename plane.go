@@ -76,31 +76,9 @@ func (p *Plane) Tick(game *GameState) {
 				p.state = StateIncoming
 				p.wait_ticks = p.typ.ticks_pending
 				p.height = p.initial_height
-
-				var dir Direction
-				var valid bool
-				switch p.exit.class {
-				case TypeRoute:
-					dir, valid = p.entry.Position.Direction(p.exit.Position)
-					if !valid {
-						panic("invalid direction")
-					}
-				case TypeAirport:
-					// find valid beacon
-					for _, b := range game.board.beacons {
-						dir, valid = p.entry.Position.Direction(b.Position)
-						if valid {
-							break
-						}
-					}
-				}
-				p.Direction = dir
-
 			case TypeAirport:
 				p.state = StateWaiting
-
 				p.height = 0
-				p.Direction = p.entry.Direction
 			}
 
 			p.want_height = p.height

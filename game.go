@@ -121,8 +121,9 @@ func NewGame(setup GameSetup, seed int64) *GameState {
 				callsign: rune(callsign + 'A'),
 				typ:      typ,
 
-				entry: entry,
-				exit:  exit,
+				entry:     entry,
+				exit:      exit,
+				Direction: route.Direction,
 
 				start:     start,
 				fuel_left: typ.initial_fuel,

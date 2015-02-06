@@ -58,6 +58,29 @@ func (d Direction) String() string {
 	}
 }
 
+func ParseDirection(s string) Direction {
+	switch s {
+	case "N":
+		return DIR_N
+	case "NE":
+		return DIR_NE
+	case "E":
+		return DIR_E
+	case "SE":
+		return DIR_SE
+	case "S":
+		return DIR_S
+	case "SW":
+		return DIR_SW
+	case "W":
+		return DIR_W
+	case "NW":
+		return DIR_NW
+	default:
+		panic("unknown direction")
+	}
+}
+
 type Position struct {
 	x int
 	y int
@@ -88,38 +111,6 @@ func (p Position) Move(d Direction, c int) Position {
 	default:
 		panic("invalid direction")
 	}
-}
-
-func (p Position) Direction(p2 Position) (d Direction, valid bool) {
-	valid = true
-	dx, dy := p2.x-p.x, p2.y-p.y
-
-	switch {
-	case dx == 0 && dy == 0:
-		valid = false
-
-	case dx == 0 && dy < 0:
-		d = DIR_N
-	case dx == 0 && dy > 0:
-		d = DIR_S
-	case dx > 0 && dy == 0:
-		d = DIR_E
-	case dx < 0 && dy == 0:
-		d = DIR_W
-
-	case dx == dy && dx > 0:
-		d = DIR_SE
-	case dx == dy && dx < 0:
-		d = DIR_NW
-	case dx == -dy && dx > 0:
-		d = DIR_NE
-	case dx == -dy && dx < 0:
-		d = DIR_SW
-	default:
-		valid = false
-	}
-
-	return
 }
 
 func (p Position) Distance(p2 Position) int {
