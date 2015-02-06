@@ -17,6 +17,7 @@ const (
 )
 
 const SAFE_DISTANCE = 3
+const FUEL_INDICATOR = 10 * Minutes
 
 type Plane struct {
 	callsign rune
@@ -28,6 +29,8 @@ type Plane struct {
 	start      Ticks
 	state      PlaneState
 	wait_ticks Ticks
+
+    fuel_left  Ticks
 
 	Position
 	is_hoovering bool
@@ -46,6 +49,16 @@ type Plane struct {
 }
 
 func (p *Plane) Tick(game *GameState) {
+
+    if p.IsConsumingFuel() {
+        p.fuel_left -= 1
+        if p.fuel_left == 0 {
+            game.end_reason = fmt.Sprintf("no fuel left %s", p.Marker())
+            return
+        }
+    }
+
+
 	if p.wait_ticks > 0 {
 		p.wait_ticks -= 1
 		return
@@ -108,8 +121,9 @@ func (p *Plane) Tick(game *GameState) {
 				p.is_circling = true
 			}
 
-			if dir, ok := beacon.airports[p.direction_at_navaid]; ok {
-				p.Direction = dir
+			if ep, ok := game.board.entrypoints[p.direction_at_navaid]; ok {
+                // always use the direction of the airport.
+				p.Direction = ep.Direction
 			}
 		}
 
@@ -217,6 +231,7 @@ func (p *Plane) DoTurn(c int) bool {
 	}
 	p.is_circling = false
 	p.hold_at_navaid = false
+	p.direction_at_navaid = 0
 	return true
 }
 
@@ -246,6 +261,7 @@ func (p *Plane) DoHeight(h int) bool {
 
 func (p *Plane) DoHold() bool {
 	p.hold_at_navaid = true
+	p.direction_at_navaid = 0
 	return true
 }
 
@@ -279,6 +295,12 @@ func (p Plane) IsActive() bool {
 func (p Plane) IsFlying() bool {
 	return p.state == StateFlying || p.state == StateAproach
 }
+func (p Plane) IsConsumingFuel() bool {
+	return p.state == StateWaiting ||
+		p.state == StateRolling ||
+		p.state == StateFlying ||
+		p.state == StateAproach
+}
 
 func (p Plane) String() string {
 	return fmt.Sprintf("%c: %s %s %d", p.callsign, p.Position, p.Direction, p.height)
@@ -301,6 +323,9 @@ func (p Plane) State() string {
 		res += " +H+ "
 	}
 
+    if p.fuel_left >= FUEL_INDICATOR {
+        res += " + "
+    }
 	// height not shown on approach
 	show_height := p.want_height != p.height && p.state != StateAproach
 	show_dir := p.want_turn != 0

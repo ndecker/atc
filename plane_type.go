@@ -9,7 +9,7 @@ type PlaneType struct {
 	ticks_pending  Ticks
 	ticks_rolling  Ticks
 
-	fuel_ticks Ticks
+	initial_fuel Ticks
 
 	immediate_turn bool
 	can_hoover     bool
@@ -23,7 +23,7 @@ var (
 		ticks_pending:  4,
 		ticks_rolling:  2,
 
-		fuel_ticks: 15 * Minutes,
+		initial_fuel: 15 * Minutes,
 
 		immediate_turn: false,
 		can_hoover:     false,
@@ -36,7 +36,7 @@ var (
 		ticks_pending:  4,
 		ticks_rolling:  4,
 
-		fuel_ticks: 21 * Minutes,
+		initial_fuel: 21 * Minutes,
 
 		immediate_turn: false,
 		can_hoover:     false,
@@ -49,7 +49,7 @@ var (
 		ticks_pending:  4,
 		ticks_rolling:  0,
 
-		fuel_ticks: 20 * Minutes,
+		initial_fuel: 20 * Minutes,
 
 		immediate_turn: true,
 		can_hoover:     true,

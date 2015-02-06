@@ -121,7 +121,6 @@ type EntryPoint struct {
 
 type Beacon struct {
 	Position
-	airports map[rune]Direction
 }
 
 type Route struct {
@@ -191,25 +190,10 @@ func ParseBoard(s string, rs string) *Board {
 			case '+':
 				// direction marker for Airport
 			case '*':
-				b.beacons = append(b.beacons, Beacon{
-					pos,
-					make(map[rune]Direction),
-				})
+				b.beacons = append(b.beacons, Beacon{pos})
 			case '.':
 			default:
 				panic("unknown spec: " + string(ch))
-			}
-		}
-	}
-
-	// find airports for beacons
-	for _, beacon := range b.beacons {
-		for sign, ep := range b.entrypoints {
-			if ep.class == TypeAirport {
-				dir, valid := beacon.Position.Direction(ep.Position)
-				if valid {
-					beacon.airports[sign] = dir
-				}
 			}
 		}
 	}
