@@ -49,15 +49,15 @@ var (
 		ticks_pending:  4,
 		ticks_rolling:  0,
 
-		initial_fuel: 20 * Minutes,
+		initial_fuel: 15 * Minutes,
 
 		immediate_turn: true,
 		can_hoover:     true,
 	}
 
 	PLANE_TYPES = []PlaneType{
-		//PLANE_TYPE_JET,
-		//PLANE_TYPE_PROP,
+		PLANE_TYPE_JET,
+		PLANE_TYPE_PROP,
 		PLANE_TYPE_HELI,
 	}
 )

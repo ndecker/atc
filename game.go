@@ -48,7 +48,7 @@ func (g *GameState) Tick() {
 	remaining := 0
 	for _, p := range g.planes {
 		p.Tick(g)
-		if p.state != StateAway {
+		if p.state != StateLanded && p.state != StateDeparted {
 			remaining += 1
 		}
 	}
@@ -99,7 +99,7 @@ func NewGame(setup GameSetup, seed int64) *GameState {
 		var plane *Plane
 		tries := 0
 
-        retry_plane:
+	retry_plane:
 		for {
 			if tries > 100 {
 				panic("cannot find valid plane")
@@ -124,21 +124,22 @@ func NewGame(setup GameSetup, seed int64) *GameState {
 				entry: entry,
 				exit:  exit,
 
-				start: start,
-                fuel_left: typ.initial_fuel,
+				start:     start,
+				fuel_left: typ.initial_fuel,
 
 				initial_height: height,
 
-				is_circling:  false,
+				is_holding:   false,
 				is_hoovering: typ.can_hoover && entry.class == TypeAirport,
 
 				hold_at_navaid: exit.class == TypeAirport,
 			}
 
+			// no two planes from the same origin share the same altitude<
 			for _, other_plane := range game.planes {
 				if other_plane.entry == plane.entry &&
-					other_plane.initial_height == plane.initial_height &&
-					Abs(int(other_plane.start-plane.start)) < 4*SAFE_DISTANCE {
+					other_plane.entry.class == TypeRoute &&
+					other_plane.initial_height == plane.initial_height {
 					// retry another plane
 					continue retry_plane
 				}

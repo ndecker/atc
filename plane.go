@@ -13,7 +13,9 @@ const (
 	StateRolling  = iota
 	StateFlying   = iota
 	StateAproach  = iota
-	StateAway     = iota
+
+	StateLanded   = iota
+	StateDeparted = iota
 )
 
 const SAFE_DISTANCE = 3
@@ -30,7 +32,7 @@ type Plane struct {
 	state      PlaneState
 	wait_ticks Ticks
 
-    fuel_left  Ticks
+	fuel_left Ticks
 
 	Position
 	is_hoovering bool
@@ -44,20 +46,19 @@ type Plane struct {
 	initial_height int
 
 	hold_at_navaid      bool
-	is_circling         bool
+	is_holding          bool
 	direction_at_navaid rune
 }
 
 func (p *Plane) Tick(game *GameState) {
 
-    if p.IsConsumingFuel() {
-        p.fuel_left -= 1
-        if p.fuel_left == 0 {
-            game.end_reason = fmt.Sprintf("no fuel left %s", p.Marker())
-            return
-        }
-    }
-
+	if p.IsConsumingFuel() {
+		p.fuel_left -= 1
+		if p.fuel_left == 0 {
+			game.end_reason = fmt.Sprintf("fuel exhausted %s", p.Marker())
+			return
+		}
+	}
 
 	if p.wait_ticks > 0 {
 		p.wait_ticks -= 1
@@ -118,16 +119,16 @@ func (p *Plane) Tick(game *GameState) {
 		beacon := game.board.GetBeacon(p.Position)
 		if beacon != nil {
 			if p.hold_at_navaid {
-				p.is_circling = true
+				p.is_holding = true
 			}
 
 			if ep, ok := game.board.entrypoints[p.direction_at_navaid]; ok {
-                // always use the direction of the airport.
+				// always use the direction of the airport.
 				p.Direction = ep.Direction
 			}
 		}
 
-		if p.is_circling {
+		if p.is_holding {
 			p.Direction = p.Direction.Left(1)
 		}
 
@@ -135,7 +136,7 @@ func (p *Plane) Tick(game *GameState) {
 		p.ApplyWants()
 
 		p.wait_ticks = p.typ.ticks_per_move - 1
-	case StateAway:
+	case StateDeparted, StateLanded:
 	default:
 		panic("unhandled case")
 	}
@@ -197,7 +198,7 @@ func (p *Plane) UpdatePosition(game *GameState) {
 			game.end_reason = fmt.Sprintf("Boundary Error -- %c%d", p.callsign, p.height)
 			return
 		}
-		p.state = StateAway
+		p.state = StateDeparted
 		return
 	}
 
@@ -205,13 +206,15 @@ func (p *Plane) UpdatePosition(game *GameState) {
 		ap := game.board.GetEntryPoint(next_pos)
 		if ap != nil {
 			if ap == p.exit && p.height == 0 {
-				p.state = StateAway
+				p.state = StateLanded
 				return
 			}
 
+			// call off landing
 			if !p.is_hoovering {
 				// if hoovering over the airport do not reset to flying
 				p.state = StateFlying
+				p.height = 1
 			}
 		}
 	}
@@ -229,7 +232,7 @@ func (p *Plane) DoTurn(c int) bool {
 	} else {
 		p.want_turn = c
 	}
-	p.is_circling = false
+	p.is_holding = false
 	p.hold_at_navaid = false
 	p.direction_at_navaid = 0
 	return true
@@ -323,9 +326,9 @@ func (p Plane) State() string {
 		res += " +H+ "
 	}
 
-    if p.fuel_left >= FUEL_INDICATOR {
-        res += " + "
-    }
+	if p.fuel_left >= FUEL_INDICATOR {
+		res += " + "
+	}
 	// height not shown on approach
 	show_height := p.want_height != p.height && p.state != StateAproach
 	show_dir := p.want_turn != 0
@@ -341,13 +344,21 @@ func (p Plane) State() string {
 			p.Direction.Right(p.want_turn))
 	}
 
-	switch p.state {
-	case StateWaiting:
+	switch {
+	case p.state == StateWaiting:
 		res += " -- Awaiting Takeoff --"
-	case StateRolling:
-		res += " -- Rolling --"
-	case StateAproach:
+	case p.state == StateRolling:
+		res += " -- Rolling! --"
+	case p.is_holding:
+		res += " -- Holding --"
+	case p.state == StateAproach:
 		res += " -- Final Approach --"
+	case p.direction_at_navaid != 0:
+		res += " -- Cleared --"
+	case p.state == StateLanded:
+		res += " -- Landed --"
+	case p.state == StateDeparted:
+		res += " -- Departed Area --"
 	}
 
 	return res
