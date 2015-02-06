@@ -45,9 +45,9 @@ type Plane struct {
 	last_height    int
 	initial_height int
 
-	hold_at_navaid      bool
-	is_holding          bool
-	direction_at_navaid rune
+	hold_at_navaid   bool
+	is_holding       bool
+	clear_to_aproach rune
 }
 
 func (p *Plane) Tick(game *GameState) {
@@ -122,7 +122,7 @@ func (p *Plane) Tick(game *GameState) {
 				p.is_holding = true
 			}
 
-			if ep, ok := game.board.entrypoints[p.direction_at_navaid]; ok {
+			if ep, ok := game.board.entrypoints[p.clear_to_aproach]; ok {
 				// always use the direction of the airport.
 				p.Direction = ep.Direction
 			}
@@ -234,7 +234,7 @@ func (p *Plane) DoTurn(c int) bool {
 	}
 	p.is_holding = false
 	p.hold_at_navaid = false
-	p.direction_at_navaid = 0
+	p.clear_to_aproach = 0
 	return true
 }
 
@@ -264,7 +264,7 @@ func (p *Plane) DoHeight(h int) bool {
 
 func (p *Plane) DoHold() bool {
 	p.hold_at_navaid = true
-	p.direction_at_navaid = 0
+	p.clear_to_aproach = 0
 	return true
 }
 
@@ -277,7 +277,7 @@ func (p *Plane) DoKeep() bool {
 }
 
 func (p *Plane) TurnAtNavaid(navaid rune) bool {
-	p.direction_at_navaid = navaid
+	p.clear_to_aproach = navaid
 	p.hold_at_navaid = false
 	return true
 }
@@ -353,7 +353,7 @@ func (p Plane) State() string {
 		res += " -- Holding --"
 	case p.state == StateAproach:
 		res += " -- Final Approach --"
-	case p.direction_at_navaid != 0:
+	case p.clear_to_aproach != 0:
 		res += " -- Cleared --"
 	case p.state == StateLanded:
 		res += " -- Landed --"
