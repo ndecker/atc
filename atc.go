@@ -15,6 +15,17 @@ var (
 	events  chan termbox.Event = make(chan termbox.Event, 0)
 )
 
+func ShowGame(game *GameState) {
+	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+	print(0, 0, "Seed: ", game.seed)
+	for row, p := range game.planes {
+		print(0, row+1, p)
+	}
+	termbox.Flush()
+
+	<-events
+}
+
 func DrawGame(game *GameState) {
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 	_, termh := termbox.Size()
@@ -159,6 +170,8 @@ func main() {
 		seed := RandSeed()
 
 		game := NewGame(DEFAULT_SETUP, seed)
+		ShowGame(game) // Debug
+
 		GameLoop(game)
 
 		ev := <-events

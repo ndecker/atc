@@ -30,20 +30,19 @@ const (
         .....8........5.....6....
     `
 
-	// TODO: =-= %-% nur Prop
 	// Format: weight: entry-exit-direction
 	DEFAULT_ROUTES = `
-        4: 0-9-E  9-0-W
-        4: 1-8-S  8-1-N
-        4: 2-7-SE 7-2-NW
-        4: 3-6-S  6-3-N
-        4: 4-5-SE 5-4-NW
+        6: 0-9-E  9-0-W
+        6: 1-8-S  8-1-N
+        6: 2-7-SE 7-2-NW
+        6: 3-6-S  6-3-N
+        6: 4-5-SE 5-4-NW
 
         1: 0-=-E  1-=-S  2-=-SE 3-=-S  4-=-SE 5-=-NW 6-=-N  7-=-NW 8-=-N  9-=-W
         1: 0-%-E  1-%-S  2-%-SE 3-%-S  4-%-SE 5-%-NW 6-%-N  7-%-NW 8-%-N  9-%-W
         1: =-0-W  =-1-W  =-2-W  =-3-W  =-4-W  =-5-W  =-6-W  =-7-W  =-8-W  =-9-W
         1: %-0-NW %-1-NW %-2-NW %-3-NW %-4-NW %-5-NW %-6-NW %-7-NW %-8-NW %-9-NW
-        1: =-=-W  %-%-NW =-%-W %-=-NW
+        2: =-=-W  %-%-NW =-%-W %-=-NW
     `
 )
 
@@ -115,6 +114,7 @@ type Route struct {
 	entry rune
 	exit  rune
 	Direction
+	weight int
 }
 
 func (r Route) String() string {
@@ -208,15 +208,14 @@ func ParseBoard(s string, rs string) *Board {
 				entry:     rune(r_parts[0][0]),
 				exit:      rune(r_parts[1][0]),
 				Direction: ParseDirection(r_parts[2]),
+				weight:    weight,
 			}
 			_, ok_entry := b.entrypoints[route.entry]
 			_, ok_exit := b.entrypoints[route.exit]
 			if !ok_entry || !ok_exit {
 				panic("unknown entrypoint: " + string(route.entry) + " or " + string(route.exit))
 			}
-			for n := 0; n < weight; n += 1 {
-				b.routes = append(b.routes, route)
-			}
+			b.routes = append(b.routes, route)
 
 		}
 

@@ -3,8 +3,10 @@ package main
 // TODO: fuel: jet 15m prop 21m
 
 type PlaneType struct {
-	mark           rune
-	name           string
+	mark   rune
+	name   string
+	weight int
+
 	ticks_per_move Ticks
 	ticks_pending  Ticks
 	ticks_rolling  Ticks
@@ -13,12 +15,17 @@ type PlaneType struct {
 
 	immediate_turn bool
 	can_hoover     bool
+
+	entry_exit_routes bool
+	airport_loop      bool
 }
 
 var (
 	PLANE_TYPE_JET = PlaneType{
-		mark:           'J',
-		name:           "Jet",
+		mark:   'J',
+		name:   "Jet",
+		weight: 6,
+
 		ticks_per_move: 1,
 		ticks_pending:  4,
 		ticks_rolling:  2,
@@ -27,11 +34,16 @@ var (
 
 		immediate_turn: false,
 		can_hoover:     false,
+
+		entry_exit_routes: true,
+		airport_loop:      false,
 	}
 
 	PLANE_TYPE_PROP = PlaneType{
-		mark:           'P',
-		name:           "Prop",
+		mark:   'P',
+		name:   "Prop",
+		weight: 4,
+
 		ticks_per_move: 2,
 		ticks_pending:  4,
 		ticks_rolling:  4,
@@ -40,11 +52,16 @@ var (
 
 		immediate_turn: false,
 		can_hoover:     false,
+
+		entry_exit_routes: true,
+		airport_loop:      true,
 	}
 
 	PLANE_TYPE_HELI = PlaneType{
-		mark:           'H',
-		name:           "Heli",
+		mark:   'H',
+		name:   "Heli",
+		weight: 1,
+
 		ticks_per_move: 2,
 		ticks_pending:  4,
 		ticks_rolling:  0,
@@ -53,11 +70,22 @@ var (
 
 		immediate_turn: true,
 		can_hoover:     true,
-	}
 
-	PLANE_TYPES = []PlaneType{
-		PLANE_TYPE_JET,
-		PLANE_TYPE_PROP,
-		PLANE_TYPE_HELI,
+		entry_exit_routes: false,
+		airport_loop:      false,
 	}
 )
+
+func PlaneTypes(setup GameSetup) []*PlaneType {
+	plane_types := make([]*PlaneType, 0, 3)
+	if setup.have_jet {
+		plane_types = append(plane_types, &PLANE_TYPE_JET)
+	}
+	if setup.have_prop {
+		plane_types = append(plane_types, &PLANE_TYPE_PROP)
+	}
+	if setup.have_heli {
+		plane_types = append(plane_types, &PLANE_TYPE_HELI)
+	}
+	return plane_types
+}

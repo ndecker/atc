@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"sort"
 )
 
 type PlaneState int
@@ -284,7 +286,10 @@ func (p Plane) IsConsumingFuel() bool {
 }
 
 func (p Plane) String() string {
-	return fmt.Sprintf("%c: %s %s %d", p.callsign, p.Position, p.Direction, p.height)
+	return fmt.Sprintf("%s: %-2s %s %s %s",
+		p.Flightplan(), p.Direction,
+		p.start,
+		p.Position, p.State())
 }
 
 func (p Plane) Flightplan() string {
@@ -297,16 +302,17 @@ func (p Plane) Marker() string {
 }
 
 func (p Plane) State() string {
-	res := fmt.Sprintf("%c%d%c %c-%c %s",
+	res := fmt.Sprintf("%c%d%c %c-%c %-2s",
 		p.callsign, p.height, p.typ.mark, p.entry.sign, p.exit.sign, p.Direction)
 
 	if p.is_hoovering {
-		res += " +H+ "
+		res += " H "
 	}
 
 	if p.fuel_left >= FUEL_INDICATOR {
 		res += " + "
 	}
+
 	// height not shown on approach
 	show_height := p.want_height != p.height && p.state != StateAproach
 	show_dir := p.want_turn != 0
@@ -340,6 +346,84 @@ func (p Plane) State() string {
 	}
 
 	return res
+}
+
+func MakePlanes(setup GameSetup, board *Board, seed int64) []*Plane {
+	planes := make([]*Plane, 0, setup.num_planes)
+
+	r := rand.New(rand.NewSource(seed))
+	plane_types := PlaneTypes(setup)
+	callsigns := r.Perm(setup.num_planes)
+
+	for _, callsign := range callsigns {
+		var plane *Plane
+		tries := 0
+
+	retry_plane: // try until valid plan found
+		for {
+			if tries > 100 {
+				panic("cannot find valid plane")
+			}
+
+			typ := ChoosePlaneType(r, plane_types)
+			route := ChooseRoute(r, board.routes)
+
+			// entries are present. checked in board.go
+			entry := board.entrypoints[route.entry]
+			exit := board.entrypoints[route.exit]
+
+			if !typ.entry_exit_routes && entry.class == TypeRoute && exit.class == TypeRoute {
+				continue retry_plane
+			}
+
+			if !typ.airport_loop && entry == exit && entry.class == TypeAirport {
+				continue retry_plane
+			}
+
+			start := Ticks(RandRange(r, int(setup.last_plane_start), int(setup.duration)))
+			height := RandRange(r, 6, 9)
+
+			plane = &Plane{
+				callsign: rune(callsign + 'A'),
+				typ:      typ,
+
+				entry: entry,
+				exit:  exit,
+
+				Position:  entry.Position,
+				Direction: route.Direction,
+
+				start:     start,
+				fuel_left: typ.initial_fuel,
+
+				height:         height,
+				want_height:    height,
+				initial_height: height,
+
+				is_holding:   false,
+				is_hoovering: typ.can_hoover && entry.class == TypeAirport,
+
+				hold_at_navaid: exit.class == TypeAirport,
+			}
+
+			// no two planes from the same origin share the same altitude<
+			for _, other_plane := range planes {
+				if other_plane.entry == plane.entry &&
+					other_plane.entry.class == TypeRoute &&
+					other_plane.initial_height == plane.initial_height {
+					// retry another plane
+					continue retry_plane
+				}
+			}
+
+			break
+		}
+
+		planes = append(planes, plane)
+	}
+
+	sort.Sort(ByTime(planes))
+	return planes
 }
 
 type ByTime []*Plane

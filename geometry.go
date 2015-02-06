@@ -87,7 +87,7 @@ type Position struct {
 }
 
 func (p Position) String() string {
-	return fmt.Sprintf("%d/%d", p.x, p.y)
+	return fmt.Sprintf("%2d/%2d", p.x, p.y)
 }
 
 func (p Position) Move(d Direction, c int) Position {
