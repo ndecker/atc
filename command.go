@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const VALID_COMMANDS = "LRASMPH%="
+const VALID_COMMANDS = "LRASMPHK%="
 const COMMANDS_WITH_ARG = "LRA"
 
 type Command struct {
@@ -41,6 +41,8 @@ func (c *Command) Apply(p *Plane) string {
 		res = p.DoTurn(0)
 	case 'H': // hold at navaid
 		res = p.DoHold()
+    case 'K': // keep position
+        res = p.DoKeep()
 	case '%', '=':
 		res = p.TurnAtNavaid(c.command)
 	default:

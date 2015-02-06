@@ -18,6 +18,8 @@ const (
 	StateAway     = iota
 )
 
+const SAFE_DISTANCE = 3
+
 type Plane struct {
 	callsign rune
     typ *PlaneType
@@ -30,6 +32,8 @@ type Plane struct {
 	wait_ticks Ticks
 
 	Position
+    is_hoovering bool
+
 	Direction
 	want_turn int
 
@@ -41,33 +45,6 @@ type Plane struct {
 	hold_at_navaid      bool
 	is_circling         bool
 	direction_at_navaid rune
-}
-
-func NewPlane(game *GameState, route Route, h int) *Plane {
-	var callsign rune
-	callsign, game.plane_names = game.plane_names[0], game.plane_names[1:]
-
-    // entries are present. checked in board.go
-	entry := game.board.entrypoints[route.entry]
-	exit := game.board.entrypoints[route.exit]
-
-    start := Ticks(game.random.Intn(int(game.setup.duration - game.setup.last_plane_start))) + game.setup.last_plane_start
-
-    // TODO: avoid immediate collisions
-	return &Plane{
-		callsign: callsign,
-        typ: &PLANE_TYPES[game.random.Intn(len(PLANE_TYPES))],
-
-		entry: entry,
-		exit:  exit,
-
-		start: start,
-
-		initial_height: h,
-
-		is_circling:    false,
-		hold_at_navaid: exit.class == TypeAirport,
-	}
 }
 
 func (p *Plane) Tick(game *GameState) {
@@ -122,7 +99,7 @@ func (p *Plane) Tick(game *GameState) {
 
 	case StateWaiting: // wait for DoHeight
 	case StateRolling: // after wait ticks
-		p.Position = p.Position.Move(p.Direction, 1)
+        p.UpdatePosition(game)
 		p.ApplyWants()
 
 		p.state = StateFlying
@@ -169,7 +146,7 @@ func (p *Plane) Collides(p2 *Plane) bool {
     }
 
     distance := p.Position.Distance(p2.Position)
-    return distance < 3
+    return distance < SAFE_DISTANCE
 }
 
 func (p *Plane) ApplyWants() {
@@ -191,7 +168,13 @@ func (p *Plane) ApplyWants() {
 }
 
 func (p *Plane) UpdatePosition(game *GameState) {
-	next_pos := p.Position.Move(p.Direction, 1)
+    var next_pos Position
+    if !p.is_hoovering {
+        next_pos = p.Position.Move(p.Direction, 1)
+    } else {
+        next_pos = p.Position
+    }
+
 	if !game.board.Contains(next_pos) {
 		// left the playing field
 		if p.Position != p.exit.Position {
@@ -213,7 +196,11 @@ func (p *Plane) UpdatePosition(game *GameState) {
 				p.state = StateAway
 				return
 			}
-			p.state = StateFlying
+
+            if !p.is_hoovering {
+                // if hoovering over the airport do not reset to flying
+                p.state = StateFlying
+            }
 		}
 	}
 	p.Position = next_pos
@@ -264,6 +251,14 @@ func (p *Plane) DoHold() bool {
 	return true
 }
 
+func (p *Plane) DoKeep() bool {
+    if !p.typ.can_hoover {
+        return false
+    }
+    p.is_hoovering = !p.is_hoovering
+    return true
+}
+
 func (p *Plane) TurnAtNavaid(navaid rune) bool {
 	p.direction_at_navaid = navaid
 	p.hold_at_navaid = false
@@ -303,6 +298,10 @@ func (p Plane) Marker() string {
 func (p Plane) State() string {
     res := fmt.Sprintf("%c%d%c %c-%c %s",
         p.callsign, p.height, p.typ.mark, p.entry.sign, p.exit.sign, p.Direction)
+
+    if p.is_hoovering {
+        res += " +H+ "
+    }
 
     // height not shown on approach
     show_height := p.want_height != p.height && p.state != StateAproach
