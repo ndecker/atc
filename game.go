@@ -11,9 +11,6 @@ var _ = fmt.Println
 var PLANE_NAMES = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 type GameSetup struct {
-	width  int
-	height int
-
 	duration         Ticks
 	last_plane_start Ticks
 
@@ -21,8 +18,6 @@ type GameSetup struct {
 }
 
 var DEFAULT_SETUP = GameSetup{
-	width:            25,
-	height:           20,
 	duration:         25 * Minutes,
 	last_plane_start: 15 * Minutes,
 	num_planes:       26,

@@ -16,9 +16,10 @@ var (
 
 func DrawGame(game *GameState) {
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+    _, termh := termbox.Size()
 
-	for x := 0; x < game.setup.width; x += 1 {
-		for y := 0; y < game.setup.height; y += 1 {
+	for x := 0; x < game.board.width; x += 1 {
+		for y := 0; y < game.board.height; y += 1 {
 			termbox.SetCell(2*x, y, '·',
 				termbox.ColorBlue, termbox.ColorDefault)
 			termbox.SetCell(2*x+1, y, ' ',
@@ -34,14 +35,21 @@ func DrawGame(game *GameState) {
 		print(b.Position.x*2, b.Position.y, "*")
 	}
 
+    col := game.board.width * 2 + 2
 	row := 0
+
 	for _, p := range game.planes {
+        if row >= termh {
+            row = 0
+            col += 10
+        }
+
 		// TODO: two column?
 		if p.IsVisible() {
-			print(52, row, p.Flightplan(), " *")
+			print(col, row, p.Flightplan(), " *")
 			row += 1
 		} else if p.IsActive() {
-			print(52, row, p.Flightplan())
+			print(col, row, p.Flightplan())
 			row += 1
 
 		}
@@ -145,6 +153,7 @@ func main() {
 
     for {
         seed := RandSeed()
+        seed = 0
         game := NewGame(DEFAULT_SETUP, seed)
         GameLoop(game)
 

@@ -47,6 +47,7 @@ func NewPlane(game *GameState, route Route, h int) *Plane {
 	var callsign rune
 	callsign, game.plane_names = game.plane_names[0], game.plane_names[1:]
 
+    // entries are present. checked in board.go
 	entry := game.board.entrypoints[route.entry]
 	exit := game.board.entrypoints[route.exit]
 

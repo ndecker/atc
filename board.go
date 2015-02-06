@@ -215,12 +215,20 @@ func ParseBoard(s string, rs string) *Board {
 			if r == "" {
 				continue
 			}
-			for n := 0; n < weight; n += 1 {
-				b.routes = append(b.routes, Route{
+
+            route := Route{
 					entry: rune(r[0]),
 					exit:  rune(r[2]),
-				})
-			}
+            }
+            _, ok_entry := b.entrypoints[route.entry]
+            _, ok_exit := b.entrypoints[route.exit]
+            if !ok_entry || !ok_exit {
+                panic("unknown entrypoint: " + string(route.entry) + " or " + string(route.exit))
+            }
+			for n := 0; n < weight; n += 1 {
+				b.routes = append(b.routes, route)
+            }
+
 		}
 
 	}
