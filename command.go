@@ -6,8 +6,29 @@ import (
 	"strings"
 )
 
-const VALID_COMMANDS = "LRASMPHK%="
-const COMMANDS_WITH_ARG = "LRA"
+const (
+	VALID_COMMANDS    = "LRASMPHK%="
+	COMMANDS_WITH_ARG = "LRA"
+
+	COMMAND_HELP = `
+        <aircraft>A0     aproach airport
+        <aircraft>A<1-5> assign altitude
+        <aircraft>M      maintain current altitude
+        <aircraft>L<0-4> turn left
+        <aircraft>R<0-4> turn right
+        <aircraft>P      proceed on current heading
+        <aircraft>H      hold at navaid
+        <aircraft>K      keep current position
+        <aircraft><airport>
+                         turn towards airport at navaid
+
+        <aircraft>S      status of aircraft
+
+        Esc              quit game
+        .                advance time
+        ?                show help
+    `
+)
 
 type Command struct {
 	callsign rune

@@ -110,6 +110,8 @@ func GameLoop(game *GameState) {
 					if game.setup.skip_to_next_tick {
 						timer.Reset(tick_time)
 					}
+				case '?':
+					ShowHelp()
 				default:
 					game.ci.KeyPressed(unicode.ToUpper(ev.Ch))
 				}

@@ -3,6 +3,7 @@ package main
 import (
 	crand "crypto/rand"
 	"math/rand"
+	"strings"
 )
 
 func Abs(i int) int {
@@ -64,4 +65,29 @@ func ChooseRoute(r *rand.Rand, a []Route) Route {
 		}
 	}
 	panic("should not happen")
+}
+
+// split and deindent lines (1st line as reference)
+func SplitLines(s string) ([]string, int) {
+	lines := strings.Split(s, "\n")
+	for lines[0] == "" {
+		lines = lines[1:]
+	}
+
+	l0 := lines[0]
+
+	var deindent int
+	for deindent = 0; deindent < len(l0) && l0[deindent] == ' '; deindent += 1 {
+	}
+
+	maxlen := 0
+	for n, _ := range lines {
+		if len(lines[n]) >= deindent {
+			lines[n] = lines[n][deindent:]
+		} else {
+			lines[n] = ""
+		}
+		maxlen = Max(maxlen, len(lines[n]))
+	}
+	return lines, maxlen
 }

@@ -46,6 +46,21 @@ func ShowPlanes(game *GameState) {
 
 }
 
+func ShowHelp() {
+	lines, maxlen := SplitLines(COMMAND_HELP)
+	x, y := DisplayWindow(maxlen+4, len(lines)+1)
+
+	print(x, y, "Help")
+	y += 1
+
+	for _, l := range lines {
+		print(x+1, y, l)
+		y += 1
+	}
+	termbox.Flush()
+	WaitForContinue()
+}
+
 func WaitForContinue() bool {
 	// Enter, Space, Esc, Ctrl-C
 	for {
