@@ -93,17 +93,11 @@ func (b *Board) GetEntryPoint(p Position) *EntryPoint {
 	return nil
 }
 
-const (
-	TypeRoute   = iota
-	TypeAirport = iota
-)
-
 type EntryPoint struct {
-	class int
-
 	sign rune
 	Position
 	Direction
+	is_airport bool
 }
 
 type Beacon struct {
@@ -157,9 +151,9 @@ func ParseBoard(s string, rs string) *Board {
 			switch ch {
 			case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 				b.entrypoints[rune(ch)] = &EntryPoint{
-					class:    TypeRoute,
-					sign:     rune(ch),
-					Position: pos,
+					sign:       rune(ch),
+					Position:   pos,
+					is_airport: false,
 				}
 			case '%', '=':
 				// find direction for airport
@@ -171,10 +165,10 @@ func ParseBoard(s string, rs string) *Board {
 					}
 				}
 				b.entrypoints[rune(ch)] = &EntryPoint{
-					class:     TypeAirport,
-					sign:      rune(ch),
-					Position:  pos,
-					Direction: dir,
+					sign:       rune(ch),
+					Position:   pos,
+					Direction:  dir,
+					is_airport: true,
 				}
 			case '+':
 				// direction marker for Airport

@@ -73,14 +73,13 @@ func (p *Plane) Tick(game *GameState) {
 	case StatePending:
 		// Wait until visible
 		if (game.clock - p.start) < p.typ.ticks_pending {
-			switch p.entry.class {
-			case TypeRoute:
+			if p.entry.is_airport {
+				p.state = StateWaiting
+				p.height = 0
+			} else {
 				p.state = StateIncoming
 				p.wait_ticks = p.typ.ticks_pending
 				p.height = p.initial_height
-			case TypeAirport:
-				p.state = StateWaiting
-				p.height = 0
 			}
 
 			p.want_height = p.height
@@ -372,11 +371,11 @@ func MakePlanes(setup GameSetup, board *Board, seed int64) []*Plane {
 			entry := board.entrypoints[route.entry]
 			exit := board.entrypoints[route.exit]
 
-			if !typ.entry_exit_routes && entry.class == TypeRoute && exit.class == TypeRoute {
+			if !typ.entry_exit_routes && !entry.is_airport && !exit.is_airport {
 				continue retry_plane
 			}
 
-			if !typ.airport_loop && entry == exit && entry.class == TypeAirport {
+			if !typ.airport_loop && entry == exit && entry.is_airport {
 				continue retry_plane
 			}
 
@@ -401,15 +400,15 @@ func MakePlanes(setup GameSetup, board *Board, seed int64) []*Plane {
 				initial_height: height,
 
 				is_holding:   false,
-				is_hoovering: typ.can_hoover && entry.class == TypeAirport,
+				is_hoovering: typ.can_hoover && entry.is_airport,
 
-				hold_at_navaid: exit.class == TypeAirport,
+				hold_at_navaid: exit.is_airport,
 			}
 
 			// no two planes from the same origin share the same altitude<
 			for _, other_plane := range planes {
 				if other_plane.entry == plane.entry &&
-					other_plane.entry.class == TypeRoute &&
+					!other_plane.entry.is_airport &&
 					other_plane.initial_height == plane.initial_height {
 					// retry another plane
 					continue retry_plane
