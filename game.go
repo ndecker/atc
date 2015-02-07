@@ -14,6 +14,8 @@ type GameSetup struct {
 	have_jet          bool
 	have_prop         bool
 	have_heli         bool
+
+	show_planes_at_start bool
 }
 
 var DEFAULT_SETUP = GameSetup{
@@ -25,6 +27,8 @@ var DEFAULT_SETUP = GameSetup{
 	have_jet:          true,
 	have_prop:         true,
 	have_heli:         true,
+
+	show_planes_at_start: true,
 }
 
 type GameState struct {

@@ -285,10 +285,8 @@ func (p Plane) IsConsumingFuel() bool {
 }
 
 func (p Plane) String() string {
-	return fmt.Sprintf("%s: %-2s %s %s %s",
-		p.Flightplan(), p.Direction,
-		p.start,
-		p.Position, p.State())
+	return fmt.Sprintf("%s %s",
+		p.start, p.State())
 }
 
 func (p Plane) Flightplan() string {

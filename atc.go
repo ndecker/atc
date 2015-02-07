@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	termbox "github.com/nsf/termbox-go"
 	"os"
 	"os/signal"
@@ -14,17 +13,6 @@ var (
 	sigterm chan os.Signal     = make(chan os.Signal, 1)
 	events  chan termbox.Event = make(chan termbox.Event, 0)
 )
-
-func ShowGame(game *GameState) {
-	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-	print(0, 0, "Seed: ", game.seed)
-	for row, p := range game.planes {
-		print(0, row+1, p)
-	}
-	termbox.Flush()
-
-	<-events
-}
 
 func DrawGame(game *GameState) {
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
@@ -88,15 +76,6 @@ func DrawGame(game *GameState) {
 	}
 
 	termbox.Flush()
-}
-
-func print(x, y int, args ...interface{}) {
-	s := fmt.Sprint(args...)
-	for _, r := range s {
-		termbox.SetCell(x, y, r,
-			termbox.ColorDefault, termbox.ColorDefault)
-		x += 1
-	}
 }
 
 func GameLoop(game *GameState) {
@@ -168,22 +147,15 @@ func main() {
 
 	for {
 		seed := RandSeed()
-
 		game := NewGame(DEFAULT_SETUP, seed)
-		ShowGame(game) // Debug
+
+		if game.setup.show_planes_at_start {
+			ShowPlanes(game)
+		}
 
 		GameLoop(game)
-
-		ev := <-events
-		switch ev.Type {
-		case termbox.EventKey:
-			switch ev.Ch {
-			case 0:
-				switch ev.Key {
-				case termbox.KeyEsc, termbox.KeyCtrlC:
-					return // end game
-				}
-			}
+		if !WaitForContinue() {
+			return
 		}
 	}
 }
