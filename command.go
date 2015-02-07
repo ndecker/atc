@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	VALID_COMMANDS    = "LRASMPHK%="
-	COMMANDS_WITH_ARG = "LRA"
+	COMMANDS_WITHOUT_ARG = "SMPHK%="
+	COMMANDS_WITH_ARG    = "LRA"
 
 	COMMAND_HELP = `
         <aircraft>A0     aproach airport
@@ -31,12 +31,23 @@ const (
 )
 
 type Command struct {
+	valid   bool
+	delayed int
+
 	callsign rune
 	command  rune
 	arg      int
 }
 
 func (c *Command) Apply(p *Plane) string {
+	if !c.valid {
+		return "--- Say Again? ---"
+	}
+
+	if p == nil {
+		return "---------"
+	}
+
 	if c.command == 'S' && p.IsActive() {
 		return p.State()
 	}
@@ -78,16 +89,50 @@ func (c *Command) Apply(p *Plane) string {
 }
 
 type CommandInterpreter struct {
-	game *GameState
+	setup GameSetup
 
 	buf   string
 	last  string
 	reply string
+
+	delayed_commands []*Command
+
+	last_commanded_plane *Plane
 }
 
-func (ci *CommandInterpreter) KeyPressed(key rune) {
+func (ci *CommandInterpreter) KeyPressed(g *GameState, key rune) {
 	ci.buf += string(key)
-	ci.try_command()
+
+	cmd := ci.parse_command(ci.buf)
+
+	if cmd == nil {
+		// incomplete
+		return
+	}
+
+	ci.last = ci.buf
+	ci.buf = ""
+
+	if cmd.delayed > 0 {
+		ci.delayed_commands = append(ci.delayed_commands, cmd)
+	} else {
+		plane := g.FindPlane(cmd.callsign)
+		ci.reply = cmd.Apply(plane)
+		ci.last_commanded_plane = plane
+	}
+}
+
+func (ci *CommandInterpreter) Tick(g *GameState) {
+	ci.last_commanded_plane = nil
+
+	// TODO: old commands stay in delayed_commands with delayed < 0
+	for _, cmd := range ci.delayed_commands {
+		cmd.delayed -= 1
+		if cmd.delayed == 0 {
+			plane := g.FindPlane(cmd.callsign)
+			_ = cmd.Apply(plane) // apply silently
+		}
+	}
 }
 
 func (ci *CommandInterpreter) Clear() {
@@ -104,67 +149,33 @@ func (ci CommandInterpreter) StatusLine() string {
 	}
 }
 
-func (ci *CommandInterpreter) try_command() {
-	valid, complete, cmd := parse_command(ci.buf)
+func (ci *CommandInterpreter) parse_command(s string) *Command {
+	var cmd Command
+	var state int
 
-	if !valid {
-		ci.reply = "--- Say Again? ---"
-		ci.last = ci.buf
-		ci.buf = ""
-		return
-	}
-
-	if !complete {
-		return
-	}
-
-	ci.last = ci.buf
-	ci.buf = ""
-
-	var plane *Plane
-	for _, p := range ci.game.planes {
-		if p.callsign == cmd.callsign {
-			plane = p
-			break
-		}
-	}
-
-	if plane == nil {
-		ci.reply = "-----------"
-	} else {
-		ci.reply = cmd.Apply(plane)
-		ci.game.last_commanded_plane = plane
-	}
-
-}
-
-func parse_command(s string) (valid bool, complete bool, cmd Command) {
-	for pos, char := range s {
-		switch pos {
-		case 0:
-			if char < 'A' || char > 'Z' {
-				return
-			}
+	for _, char := range s {
+		switch {
+		case state == 0 && char == '.':
+			cmd.delayed += 1
+		case state == 0 && char >= 'A' && char <= 'Z':
+			state = 1
 			cmd.callsign = char
-		case 1:
-			if !strings.ContainsRune(VALID_COMMANDS, char) {
-				return
-			}
+		case state == 1 && strings.ContainsRune(COMMANDS_WITHOUT_ARG, char):
 			cmd.command = char
-			complete = !strings.ContainsRune(COMMANDS_WITH_ARG, char)
-		case 2:
-			arg, err := strconv.Atoi(string(char))
-			if err != nil || arg < 0 || arg > 9 || complete {
-				// command without args should not go here
-				return
-			}
+			cmd.valid = true
+			return &cmd
+		case state == 1 && strings.ContainsRune(COMMANDS_WITH_ARG, char):
+			cmd.command = char
+			state = 2
+		case state == 2 && char >= '0' && char <= '9':
+			arg, _ := strconv.Atoi(string(char))
 			cmd.arg = arg
-			complete = true
+			cmd.valid = true
+			return &cmd
 		default:
-			panic("should not happen")
+			// valid == false
+			return &cmd
 		}
 	}
-
-	valid = true
-	return
+	return nil
 }

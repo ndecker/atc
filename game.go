@@ -11,22 +11,28 @@ type GameSetup struct {
 	num_planes int
 
 	skip_to_next_tick bool // if true "," will skip to the beginning of the next tick
-	have_jet          bool
-	have_prop         bool
-	have_heli         bool
+	delayed_commands  bool
+
+	have_jet  bool
+	have_prop bool
+	have_heli bool
 
 	show_planes_at_start bool
+
+	commands [][]Command
 }
 
 var DEFAULT_SETUP = GameSetup{
 	duration:         25 * Minutes,
 	last_plane_start: 15 * Minutes,
-	num_planes:       26,
+	num_planes:       25,
 
 	skip_to_next_tick: true,
-	have_jet:          true,
-	have_prop:         true,
-	have_heli:         true,
+	delayed_commands:  true,
+
+	have_jet:  true,
+	have_prop: true,
+	have_heli: true,
 
 	show_planes_at_start: true,
 }
@@ -42,14 +48,12 @@ type GameState struct {
 
 	ci CommandInterpreter
 
-	planes               []*Plane
-	last_commanded_plane *Plane
+	planes []*Plane
 }
 
 func (g *GameState) Tick() {
 	g.clock.Tick()
 
-	g.last_commanded_plane = nil
 	if g.clock == 0 {
 		g.end_reason = "Time is up"
 	}
@@ -81,6 +85,24 @@ func (g *GameState) Tick() {
 	if remaining == 0 {
 		g.end_reason = "Won"
 	}
+
+	// apply delayed commands
+	g.ci.Tick(g)
+}
+
+func (g *GameState) KeyPressed(k rune) {
+	g.ci.KeyPressed(g, k)
+}
+
+func (g *GameState) FindPlane(callsign rune) *Plane {
+	var plane *Plane
+	for _, p := range g.planes {
+		if p.callsign == callsign {
+			plane = p
+			break
+		}
+	}
+	return plane
 }
 
 func (g *GameState) String() string {
@@ -102,7 +124,7 @@ func NewGame(setup GameSetup, seed int64) *GameState {
 		clock:  setup.duration,
 		planes: MakePlanes(setup, board, seed),
 	}
-	game.ci.game = game
+	game.ci.setup = setup
 
 	return game
 }

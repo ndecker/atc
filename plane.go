@@ -378,7 +378,11 @@ func MakePlanes(setup GameSetup, board *Board, seed int64) []*Plane {
 			}
 
 			start := Ticks(RandRange(r, int(setup.last_plane_start), int(setup.duration)))
+
 			height := RandRange(r, 6, 9)
+			if entry.is_airport {
+				height = 0
+			}
 
 			plane = &Plane{
 				callsign: rune(callsign + 'A'),

@@ -59,9 +59,9 @@ func DrawGame(game *GameState) {
 		}
 	}
 
-	if game.last_commanded_plane != nil {
+	if game.ci.last_commanded_plane != nil {
 		// always show last commanded plane on top
-		p := game.last_commanded_plane
+		p := game.ci.last_commanded_plane
 		if p.IsFlying() {
 			print(p.Position.x*2, p.Position.y, p.Marker())
 		}
@@ -113,7 +113,7 @@ func GameLoop(game *GameState) {
 				case '?':
 					ShowHelp()
 				default:
-					game.ci.KeyPressed(unicode.ToUpper(ev.Ch))
+					game.KeyPressed(unicode.ToUpper(ev.Ch))
 				}
 			case termbox.EventResize:
 				// nothing; just redraw
