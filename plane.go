@@ -350,9 +350,8 @@ func MakePlanes(setup GameSetup, board *Board, seed int64) []*Plane {
 
 	r := rand.New(rand.NewSource(seed))
 	plane_types := PlaneTypes(setup)
-	callsigns := r.Perm(setup.num_planes)
 
-	for _, callsign := range callsigns {
+	for n := 0; n < setup.num_planes; n++ {
 		var plane *Plane
 		tries := 0
 
@@ -385,8 +384,7 @@ func MakePlanes(setup GameSetup, board *Board, seed int64) []*Plane {
 			}
 
 			plane = &Plane{
-				callsign: rune(callsign + 'A'),
-				typ:      typ,
+				typ: typ,
 
 				entry: entry,
 				exit:  exit,
@@ -424,6 +422,15 @@ func MakePlanes(setup GameSetup, board *Board, seed int64) []*Plane {
 	}
 
 	sort.Sort(ByTime(planes))
+
+	// assign callsigns last because there might not
+	// be enough letters for all planes and the first ones
+	// should get callsigns first
+	callsigns := r.Perm(Min(setup.num_planes, 26))
+	for n, callsign := range callsigns {
+		planes[n].callsign = rune(callsign + 'A')
+	}
+
 	return planes
 }
 

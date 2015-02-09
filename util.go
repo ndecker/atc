@@ -20,6 +20,13 @@ func Max(a int, b int) int {
 	return b
 }
 
+func Min(a int, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func RandSeed() int64 {
 	rbuf := make([]byte, 4)
 	_, err := crand.Read(rbuf)

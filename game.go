@@ -23,9 +23,9 @@ type GameSetup struct {
 }
 
 var DEFAULT_SETUP = GameSetup{
-	duration:         25 * Minutes,
+	duration:         60 * Minutes,
 	last_plane_start: 15 * Minutes,
-	num_planes:       25,
+	num_planes:       50,
 
 	skip_to_next_tick: true,
 	delayed_commands:  true,
@@ -48,7 +48,8 @@ type GameState struct {
 
 	ci CommandInterpreter
 
-	planes []*Plane
+	planes             []*Plane
+	reusable_callsigns []rune
 }
 
 func (g *GameState) Tick() {
@@ -62,8 +63,21 @@ func (g *GameState) Tick() {
 	remaining := 0
 	for _, p := range g.planes {
 		p.Tick(g)
+
+		if p.callsign == 0 && (p.state == StateIncoming || p.state == StateWaiting) {
+			if len(g.reusable_callsigns) == 0 {
+				g.end_reason = "Too many active planes"
+			}
+			p.callsign = g.reusable_callsigns[0]
+			g.reusable_callsigns = g.reusable_callsigns[1:]
+		}
+
 		if p.state != StateLanded && p.state != StateDeparted {
 			remaining += 1
+		} else if p.callsign != 0 {
+			// plane is done; reusable callsign
+			g.reusable_callsigns = append(g.reusable_callsigns, p.callsign)
+			p.callsign = 0
 		}
 	}
 
