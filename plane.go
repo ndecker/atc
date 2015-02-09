@@ -95,6 +95,13 @@ func (p *Plane) Tick(game *GameState) {
 
 		p.state = StateFlying
 	case StateFlying, StateAproach:
+		if p.is_holding {
+			p.Direction = p.Direction.Left(1)
+		}
+
+		p.UpdatePosition(game)
+		p.ApplyWants()
+
 		beacon := game.board.GetBeacon(p.Position)
 		if beacon != nil {
 			if p.hold_at_navaid {
@@ -106,13 +113,6 @@ func (p *Plane) Tick(game *GameState) {
 				p.Direction = ep.Direction
 			}
 		}
-
-		if p.is_holding {
-			p.Direction = p.Direction.Left(1)
-		}
-
-		p.UpdatePosition(game)
-		p.ApplyWants()
 
 		p.wait_ticks = p.typ.ticks_per_move - 1
 	case StateDeparted, StateLanded:
