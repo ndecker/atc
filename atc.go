@@ -16,27 +16,33 @@ var (
 
 func DrawGame(game *GameState) {
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-	_, termh := termbox.Size()
+	termw, termh := termbox.Size()
+
+	width := game.board.width*2 + 2 + 10
+	left := (termw - width) / 2
+
+	height := game.board.height + 2
+	top := (termh - height) / 2
 
 	for x := 0; x < game.board.width; x += 1 {
 		for y := 0; y < game.board.height; y += 1 {
-			termbox.SetCell(2*x, y, '·',
+			termbox.SetCell(left+2*x, top+y, '·',
 				termbox.ColorBlue, termbox.ColorDefault)
-			termbox.SetCell(2*x+1, y, ' ',
+			termbox.SetCell(left+2*x+1, top+y, ' ',
 				termbox.ColorBlue, termbox.ColorDefault)
 		}
 	}
 
 	for _, ep := range game.board.entrypoints {
-		print(ep.Position.x*2, ep.Position.y, string(ep.sign))
+		print(left+ep.Position.x*2, top+ep.Position.y, string(ep.sign))
 	}
 
 	for _, b := range game.board.beacons {
-		print(b.Position.x*2, b.Position.y, "*")
+		print(left+b.Position.x*2, top+b.Position.y, "*")
 	}
 
-	col := game.board.width*2 + 2
-	row := 0
+	col := left + game.board.width*2 + 2
+	row := top
 
 	for _, p := range game.planes {
 		if row >= termh {
@@ -55,7 +61,7 @@ func DrawGame(game *GameState) {
 		}
 
 		if p.IsFlying() {
-			print(p.Position.x*2, p.Position.y, p.Marker())
+			print(left+p.Position.x*2, top+p.Position.y, p.Marker())
 		}
 	}
 
@@ -63,16 +69,16 @@ func DrawGame(game *GameState) {
 		// always show last commanded plane on top
 		p := game.ci.last_commanded_plane
 		if p.IsFlying() {
-			print(p.Position.x*2, p.Position.y, p.Marker())
+			print(left+p.Position.x*2, top+p.Position.y, p.Marker())
 		}
 	}
 
 	// TODO: dynamic positions
-	print(0, 21, game.clock.String())
+	print(left+0, top+21, game.clock.String())
 	if game.end_reason != "" {
-		print(8, 21, game.end_reason)
+		print(left+8, top+21, game.end_reason)
 	} else {
-		print(8, 21, game.ci.StatusLine())
+		print(left+8, top+21, game.ci.StatusLine())
 	}
 
 	termbox.Flush()
