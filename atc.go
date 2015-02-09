@@ -80,8 +80,6 @@ func DrawGame(game *GameState) {
 	} else {
 		print(left+8, top+21, game.ci.StatusLine())
 	}
-
-	termbox.Flush()
 }
 
 func GameLoop(game *GameState) {
@@ -89,8 +87,14 @@ func GameLoop(game *GameState) {
 	timer := time.NewTimer(tick_time)
 	defer timer.Stop()
 
+	var help_visible bool = false
+
 	for {
 		DrawGame(game)
+		if help_visible {
+			DrawHelp()
+		}
+		termbox.Flush()
 
 		select {
 		case <-timer.C:
@@ -108,7 +112,11 @@ func GameLoop(game *GameState) {
 					case termbox.KeySpace,
 						termbox.KeyEnter,
 						termbox.KeyBackspace, termbox.KeyBackspace2:
-						game.ci.Clear()
+						if help_visible {
+							help_visible = false
+						} else {
+							game.ci.Clear()
+						}
 					}
 				case ',':
 					game.Tick()
@@ -117,7 +125,7 @@ func GameLoop(game *GameState) {
 						timer.Reset(tick_time)
 					}
 				case '?':
-					ShowHelp()
+					help_visible = !help_visible
 				default:
 					game.KeyPressed(unicode.ToUpper(ev.Ch))
 				}
@@ -131,6 +139,7 @@ func GameLoop(game *GameState) {
 
 		if game.end_reason != "" {
 			DrawGame(game)
+			termbox.Flush()
 			<-events
 			return
 		}

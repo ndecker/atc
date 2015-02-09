@@ -46,7 +46,7 @@ func ShowPlanes(game *GameState) {
 
 }
 
-func ShowHelp() {
+func DrawHelp() {
 	lines, maxlen := SplitLines(COMMAND_HELP)
 	x, y := DisplayWindow(maxlen+4, len(lines)+1)
 
@@ -57,8 +57,6 @@ func ShowHelp() {
 		print(x+1, y, l)
 		y += 1
 	}
-	termbox.Flush()
-	WaitForContinue()
 }
 
 func WaitForContinue() bool {
