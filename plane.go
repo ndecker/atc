@@ -66,7 +66,7 @@ func (p *Plane) DoTick(game *GameState) {
 		p.fuel_left -= 1
 		if p.fuel_left == 0 {
 			game.end_reason = &EndReason{
-				message: fmt.Sprintf("fuel exhausted %s", p.Marker()),
+				message: "Fuel exhausted",
 				planes:  []*Plane{p},
 			}
 			return
@@ -182,7 +182,7 @@ func (p *Plane) UpdatePosition(game *GameState) {
 		// left the playing field
 		if p.Position != p.exit.Position || p.height != p.typ.exit_height {
 			game.end_reason = &EndReason{
-				message: fmt.Sprintf("Boundary Error -- %c%d", p.callsign, p.height),
+				message: "Boundary Error",
 				planes:  []*Plane{p},
 			}
 			return

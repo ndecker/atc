@@ -1,9 +1,5 @@
 package main
 
-import (
-	"fmt"
-)
-
 type GameSetup struct {
 	duration         Ticks
 	last_plane_start Ticks
@@ -24,7 +20,7 @@ type GameSetup struct {
 var DEFAULT_SETUP = GameSetup{
 	duration:         25 * Minutes,
 	last_plane_start: 15 * Minutes,
-	num_planes:       26,
+	num_planes:       30,
 
 	skip_to_next_tick: true,
 	delayed_commands:  true,
@@ -101,7 +97,7 @@ func (g *GameState) Tick() {
 
 			if p1.Collides(p2) {
 				g.end_reason = &EndReason{
-					message: fmt.Sprintf("-- Conflict -- %s %s", p1.Marker(), p2.Marker()),
+					message: "Conflict",
 					planes:  []*Plane{p1, p2},
 				}
 			}
@@ -109,7 +105,7 @@ func (g *GameState) Tick() {
 	}
 
 	if remaining == 0 {
-		g.end_reason = &EndReason{message: "Won"}
+		g.end_reason = &EndReason{message: "Success"}
 	}
 
 	// apply delayed commands

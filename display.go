@@ -99,7 +99,7 @@ func DrawHelp(screen int) {
 	screen = screen % len(HELP)
 	lines := SplitLines(HELP[screen])
 	DisplayWindow(
-        fmt.Sprintf("Help (page %d of %d)", screen+1, len(HELP)),
+		fmt.Sprintf("Help (page %d of %d)", screen+1, len(HELP)),
 		"Space: next page", lines, nil)
 }
 
@@ -122,16 +122,17 @@ func DialogKeys(ev termbox.Event, visible *bool, screen *int) {
 	}
 }
 
-func print(x, y int, strings ...string) {
-    printC(x, y, termbox.ColorDefault, strings...)
+func print(x, y int, strings ...string) int {
+	return printC(x, y, termbox.ColorDefault, strings...)
 }
 
-func printC(x, y int, fg termbox.Attribute, strings ...string) {
-    for _, s := range strings {
-        for _, r := range s {
-            termbox.SetCell(x, y, r,
-                fg, termbox.ColorDefault)
-            x += 1
-        }
-    }
+func printC(x, y int, fg termbox.Attribute, strings ...string) int {
+	for _, s := range strings {
+		for _, r := range s {
+			termbox.SetCell(x, y, r,
+				fg, termbox.ColorDefault)
+			x += 1
+		}
+	}
+	return x
 }

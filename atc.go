@@ -44,8 +44,8 @@ func DrawGame(game *GameState) {
 
 	printPlane := func(plane *Plane, color termbox.Attribute) {
 		if plane != nil && plane.IsFlying() {
-            printC(left+plane.Position.x*2, top+plane.Position.y,
-                color, plane.Marker())
+			printC(left+plane.Position.x*2, top+plane.Position.y,
+				color, plane.Marker())
 		}
 	}
 
@@ -72,11 +72,12 @@ func DrawGame(game *GameState) {
 	// TODO: dynamic positions
 	print(left+0, top+21, game.clock.String())
 	if game.end_reason != nil {
-		print(left+8, top+21, game.end_reason.message)
+		x := print(left+8, top+21, "-- ", game.end_reason.message, " --")
 		print(left+8, top+22, "(Press Esc to quit / R to restart same game)")
 
 		for _, p := range game.end_reason.planes {
 			printPlane(p, termbox.ColorRed)
+			x = print(x, top+21, " ", p.Marker())
 		}
 	} else {
 		print(left+8, top+21, game.ci.StatusLine())
