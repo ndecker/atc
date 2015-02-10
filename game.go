@@ -13,9 +13,10 @@ type GameSetup struct {
 	skip_to_next_tick bool // if true "," will skip to the beginning of the next tick
 	delayed_commands  bool
 
-	have_jet  bool
-	have_prop bool
-	have_heli bool
+	have_jet       bool
+	have_prop      bool
+	have_heli      bool
+	have_blackbird bool
 
 	show_planes bool
 
@@ -23,16 +24,17 @@ type GameSetup struct {
 }
 
 var DEFAULT_SETUP = GameSetup{
-	duration:         50 * Minutes,
+	duration:         25 * Minutes,
 	last_plane_start: 15 * Minutes,
-	num_planes:       80,
+	num_planes:       26,
 
 	skip_to_next_tick: true,
 	delayed_commands:  true,
 
-	have_jet:  true,
-	have_prop: true,
-	have_heli: true,
+	have_jet:       true,
+	have_prop:      true,
+	have_heli:      true,
+	have_blackbird: true,
 
 	show_planes: true,
 }

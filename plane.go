@@ -53,7 +53,15 @@ type Plane struct {
 }
 
 func (p *Plane) Tick(game *GameState) {
+	for n := 1; n <= p.typ.moves_per_tick; n += 1 {
+		p.DoTick(game)
+		if game.end_reason != nil {
+			return
+		}
+	}
+}
 
+func (p *Plane) DoTick(game *GameState) {
 	if p.IsConsumingFuel() {
 		p.fuel_left -= 1
 		if p.fuel_left == 0 {
@@ -172,7 +180,7 @@ func (p *Plane) UpdatePosition(game *GameState) {
 
 	if !game.board.Contains(next_pos) {
 		// left the playing field
-		if p.Position != p.exit.Position || p.height != 5 {
+		if p.Position != p.exit.Position || p.height != p.typ.exit_height {
 			game.end_reason = &EndReason{
 				message: fmt.Sprintf("Boundary Error -- %c%d", p.callsign, p.height),
 				planes:  []*Plane{p},
@@ -298,17 +306,26 @@ func (p Plane) String() string {
 }
 
 func (p Plane) Flightplan() string {
-	return fmt.Sprintf("%c%d%c %c-%c",
-		p.callsign, p.initial_height, p.typ.mark, p.entry.sign, p.exit.sign)
+	if p.initial_height <= 9 {
+		return fmt.Sprintf("%c%d%c %c-%c",
+			p.callsign, p.initial_height, p.typ.mark, p.entry.sign, p.exit.sign)
+	} else {
+		return fmt.Sprintf("%cX%c %c-%c",
+			p.callsign, p.typ.mark, p.entry.sign, p.exit.sign)
+	}
 }
 
 func (p Plane) Marker() string {
-	return fmt.Sprintf("%c%d", p.callsign, p.height)
+	if p.height <= 9 {
+		return fmt.Sprintf("%c%d", p.callsign, p.height)
+	} else {
+		return fmt.Sprintf("%cX", p.callsign)
+	}
 }
 
 func (p Plane) State() string {
-	res := fmt.Sprintf("%c%d%c %c-%c %-2s",
-		p.callsign, p.height, p.typ.mark, p.entry.sign, p.exit.sign, p.Direction)
+	res := fmt.Sprintf("%s%c %c-%c %-2s",
+		p.Marker(), p.typ.mark, p.entry.sign, p.exit.sign, p.Direction)
 
 	if p.is_hoovering {
 		res += " H "
@@ -388,9 +405,17 @@ func MakePlanes(setup GameSetup, board *Board, seed int64) []*Plane {
 				continue retry_plane
 			}
 
+			if !typ.airport_entry && entry.is_airport {
+				continue retry_plane
+			}
+
+			if !typ.airport_exit && exit.is_airport {
+				continue retry_plane
+			}
+
 			start := Ticks(RandRange(r, int(setup.last_plane_start), int(setup.duration)))
 
-			height := RandRange(r, 6, 9)
+			height := RandRange(r, typ.entry_min_height, typ.entry_max_height)
 			if entry.is_airport {
 				height = 0
 			}
