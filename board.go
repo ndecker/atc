@@ -51,7 +51,7 @@ type Board struct {
 	height int
 
 	entrypoints map[rune]*EntryPoint
-	beacons     []Beacon // TODO: rename to navaid
+	navaids     []Position
 	routes      []Route
 }
 
@@ -69,16 +69,16 @@ func (b Board) String() string {
 	return fmt.Sprintf(`
         w/h: %d/%d
         entrypoints: %v
-        beacons:     %v
+        navaids:     %v
         routes:      %v`,
-		b.width, b.height, b.entrypoints, b.beacons, b.routes)
+		b.width, b.height, b.entrypoints, b.navaids, b.routes)
 
 }
 
-func (b *Board) GetBeacon(p Position) *Beacon {
-	for _, beacon := range b.beacons {
-		if beacon.Position == p {
-			return &beacon
+func (b *Board) GetNavaid(p Position) *Position {
+	for _, navaid := range b.navaids {
+		if navaid == p {
+			return &navaid
 		}
 	}
 	return nil
@@ -100,10 +100,6 @@ type EntryPoint struct {
 	is_airport bool
 }
 
-type Beacon struct {
-	Position
-}
-
 type Route struct {
 	entry rune
 	exit  rune
@@ -118,7 +114,7 @@ func (r Route) String() string {
 func ParseBoard(s string, rs string) *Board {
 	b := &Board{
 		entrypoints: make(map[rune]*EntryPoint),
-		beacons:     make([]Beacon, 0),
+		navaids:     make([]Position, 0),
 		routes:      make([]Route, 0),
 	}
 
@@ -173,7 +169,7 @@ func ParseBoard(s string, rs string) *Board {
 			case '+':
 				// direction marker for Airport
 			case '*':
-				b.beacons = append(b.beacons, Beacon{pos})
+				b.navaids = append(b.navaids, pos)
 			case '.':
 			default:
 				panic("unknown spec: " + string(ch))

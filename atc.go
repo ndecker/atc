@@ -34,8 +34,8 @@ func DrawGame(game *GameState) {
 		print(left+ep.Position.x*2, top+ep.Position.y, string(ep.sign))
 	}
 
-	for _, b := range game.board.beacons {
-		print(left+b.Position.x*2, top+b.Position.y, "*")
+	for _, navaid := range game.board.navaids {
+		print(left+navaid.x*2, top+navaid.y, "*")
 	}
 
 	col := left + game.board.width*2 + 2

@@ -105,8 +105,8 @@ func (p *Plane) Tick(game *GameState) {
 		p.UpdatePosition(game)
 		p.ApplyWants()
 
-		beacon := game.board.GetBeacon(p.Position)
-		if beacon != nil {
+		navaid := game.board.GetNavaid(p.Position)
+		if navaid != nil {
 			if p.hold_at_navaid {
 				p.is_holding = true
 			}
