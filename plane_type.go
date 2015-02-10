@@ -16,8 +16,9 @@ type PlaneType struct {
 
 	initial_fuel Ticks
 
-	immediate_turn bool
-	can_hoover     bool
+	immediate_turn  bool
+	can_hoover      bool
+	can_enter_nofly bool
 
 	entry_exit_routes bool
 	airport_loop      bool
@@ -117,8 +118,9 @@ var (
 
 		initial_fuel: 15 * Minutes,
 
-		immediate_turn: false,
-		can_hoover:     false,
+		immediate_turn:  false,
+		can_hoover:      false,
+		can_enter_nofly: true,
 
 		entry_exit_routes: true,
 		airport_loop:      false,

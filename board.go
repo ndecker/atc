@@ -79,8 +79,35 @@ var (
         1: =-4-W  =-5-W  =-6-W  =-7-W  =-8-W   =-9-W
     `)
 
+	NOFLY_BOARD *Board = ParseBoard("NoFly Zone", `
+        ............5....6.............
+        ...............................
+        ...............................
+        ...............................
+        ...............................
+        ...............................
+        .......xxxxxxxxxxxxxxxxx.......
+        .......xxxxxxxxxxxxxxxxx.......
+        1......xxxxxxxxxxxxxxxxx......3
+        .......xxxxxxxxxxxxxxxxx.......
+        .......xxxxxxxxxxxxxxxxx.......
+        2......xxxxxxxxxxxxxxxxx......4
+        .......xxxxxxxxxxxxxxxxx.......
+        .......xxxxxxxxxxxxxxxxx.......
+        ...............................
+        ...............................
+        ...............................
+        ...............................
+        ...............................
+        ...............................
+        ............7..8...............
+    `, `
+        1: 1-3-E 4-2-W
+        1: 5-7-S 8-6-N
+    `)
+
 	BOARDS []*Board = []*Board{
-		DEFAULT_BOARD, CROSSWAYS_BOARD,
+		DEFAULT_BOARD, CROSSWAYS_BOARD, NOFLY_BOARD,
 	}
 )
 
@@ -93,6 +120,7 @@ type Board struct {
 	entrypoints map[rune]*EntryPoint
 	navaids     []Position
 	routes      []Route
+	nofly       []Position
 }
 
 func (b Board) Contains(p Position) bool {
@@ -103,16 +131,6 @@ func (b Board) Contains(p Position) bool {
 		return false
 	}
 	return true
-}
-
-func (b Board) String() string {
-	return fmt.Sprintf(`
-        w/h: %d/%d
-        entrypoints: %v
-        navaids:     %v
-        routes:      %v`,
-		b.width, b.height, b.entrypoints, b.navaids, b.routes)
-
 }
 
 func (b *Board) GetNavaid(p Position) *Position {
@@ -157,6 +175,7 @@ func ParseBoard(name string, s string, rs string) *Board {
 		entrypoints: make(map[rune]*EntryPoint),
 		navaids:     make([]Position, 0),
 		routes:      make([]Route, 0),
+		nofly:       make([]Position, 0),
 	}
 
 	lines := make([]string, 0, 40)
@@ -211,6 +230,8 @@ func ParseBoard(name string, s string, rs string) *Board {
 				// direction marker for Airport
 			case '*':
 				b.navaids = append(b.navaids, pos)
+			case 'x':
+				b.nofly = append(b.nofly, pos)
 			case '.':
 			default:
 				panic("unknown spec: " + string(ch))

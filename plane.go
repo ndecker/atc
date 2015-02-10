@@ -22,6 +22,7 @@ const (
 
 const SAFE_DISTANCE = 3
 const FUEL_INDICATOR = 10 * Minutes
+const REUSE_ENTRYPOINT_TIME = 3 * Minutes
 
 type Plane struct {
 	callsign rune
@@ -191,6 +192,17 @@ func (p *Plane) UpdatePosition(game *GameState) *EndReason {
 			return &EndReason{
 				message: "Boundary Error",
 				planes:  []*Plane{p},
+			}
+		}
+	}
+
+	if !p.typ.can_enter_nofly {
+		for _, nf := range game.board.nofly {
+			if nf == next_pos {
+				return &EndReason{
+					message: "Entering NoFly Area",
+					planes:  []*Plane{p},
+				}
 			}
 		}
 	}
@@ -451,7 +463,8 @@ func MakePlanes(setup *GameSetup, board *Board, seed int64) []*Plane {
 			for _, other_plane := range planes {
 				if other_plane.entry == plane.entry &&
 					!other_plane.entry.is_airport &&
-					other_plane.initial_height == plane.initial_height {
+					other_plane.initial_height == plane.initial_height &&
+					Ticks(Abs(int(other_plane.start-plane.start))) < REUSE_ENTRYPOINT_TIME {
 					// retry another plane
 					continue retry_plane
 				}

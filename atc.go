@@ -41,6 +41,10 @@ func DrawGame(game *GameState) {
 		print(left+navaid.x*2, top+navaid.y, "*")
 	}
 
+	for _, nf := range game.board.nofly {
+		printC(left+nf.x*2, top+nf.y, termbox.ColorBlue, "XX")
+	}
+
 	col := left + game.board.width*2 + 2
 	row := top
 
