@@ -19,8 +19,6 @@ type GameSetup struct {
 	have_blackbird bool
 
 	show_planes bool
-
-	commands [][]Command
 }
 
 var DEFAULT_SETUP = GameSetup{
