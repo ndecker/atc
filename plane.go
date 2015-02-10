@@ -390,13 +390,13 @@ func (p Plane) StateMessage() string {
 	return res
 }
 
-func MakePlanes(setup *GameSetup, board *Board, seed int64) []*Plane {
-	planes := make([]*Plane, 0, setup.num_planes)
+func MakePlanes(rules *GameRules, board *Board, seed int64) []*Plane {
+	planes := make([]*Plane, 0, rules.num_planes)
 
 	r := rand.New(rand.NewSource(seed))
-	plane_types := PlaneTypes(setup)
+	plane_types := PlaneTypes(rules)
 
-	for n := 0; n < setup.num_planes; n++ {
+	for n := 0; n < rules.num_planes; n++ {
 		var plane *Plane
 		tries := 0
 
@@ -430,7 +430,7 @@ func MakePlanes(setup *GameSetup, board *Board, seed int64) []*Plane {
 				continue retry_plane
 			}
 
-			start := Ticks(RandRange(r, int(setup.last_plane_start), int(setup.duration)))
+			start := Ticks(RandRange(r, int(rules.last_plane_start), int(rules.duration)))
 
 			height := RandRange(r, typ.entry_min_height, typ.entry_max_height)
 			if entry.is_airport {
@@ -481,7 +481,7 @@ func MakePlanes(setup *GameSetup, board *Board, seed int64) []*Plane {
 	// assign callsigns last because there might not
 	// be enough letters for all planes and the first ones
 	// should get callsigns first
-	callsigns := r.Perm(Min(setup.num_planes, 26))
+	callsigns := r.Perm(Min(rules.num_planes, 26))
 	for n, callsign := range callsigns {
 		planes[n].callsign = rune(callsign + 'A')
 	}

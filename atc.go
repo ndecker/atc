@@ -92,12 +92,12 @@ func DrawGame(game *GameState) {
 	}
 }
 
-func RunGame(setup *GameSetup, board *Board, seed int64) {
+func RunGame(rules *GameRules, board *Board, seed int64) {
 	tick_time := time.Duration(SECONDS_PER_TICK) * time.Second
 	timer := time.NewTimer(tick_time)
 	defer timer.Stop()
 
-	game := NewGame(setup, board, seed)
+	game := NewGame(rules, board, seed)
 
 	var help_visible bool = false
 	var help_screen uint = 0
@@ -147,14 +147,14 @@ func RunGame(setup *GameSetup, board *Board, seed int64) {
 					case ',':
 						game.Tick()
 
-						if game.setup.skip_to_next_tick {
+						if game.rules.skip_to_next_tick {
 							timer.Reset(tick_time)
 						}
 					case '?':
 						help_visible = true
 					case 'R', 'r':
 						if game.end_reason != nil {
-							game = NewGame(setup, board, seed)
+							game = NewGame(rules, board, seed)
 						} else {
 							game.KeyPressed(unicode.ToUpper(ev.Ch))
 						}
@@ -179,7 +179,7 @@ func usage() {
 
 func main() {
 	single_game := false
-	setup := DefaultSetup()
+	rules := DefaultRules()
 	board := DEFAULT_BOARD
 
 	switch len(os.Args) {
@@ -189,7 +189,7 @@ func main() {
 			usage()
 			return
 		}
-		setup.duration = Ticks(time) * Minutes
+		rules.duration = Ticks(time) * Minutes
 		single_game = true
 	case 3:
 		time, err := strconv.Atoi(os.Args[1])
@@ -202,8 +202,8 @@ func main() {
 			usage()
 			return
 		}
-		setup.duration = Ticks(time) * Minutes
-		setup.num_planes = planes
+		rules.duration = Ticks(time) * Minutes
+		rules.num_planes = planes
 		single_game = true
 	}
 
@@ -224,7 +224,7 @@ func main() {
 
 	if single_game {
 		seed := RandSeed()
-		RunGame(setup, board, seed)
+		RunGame(rules, board, seed)
 		return
 	}
 
@@ -240,7 +240,7 @@ func main() {
 	RunMenu("ATC - Air Traffic Control", []MenuEntry{
 		MenuEntry{key: 'S', text: "Start", action: func() {
 			seed := RandSeed()
-			RunGame(setup, board, seed)
+			RunGame(rules, board, seed)
 		}},
 		MenuEntry{key: 'B', textf: func() string {
 			return fmt.Sprintf("Board %s[%s]", PAD_SPACE[0:18-len(board.name)], board.name)
@@ -250,20 +250,20 @@ func main() {
 		MenuEntry{key: 'S', textf: func() string {
 			var s string = "Custom"
 			switch {
-			case *setup == *DefaultSetup():
+			case *rules == *DefaultRules():
 				s = "Default"
-			case *setup == *SetupATCDefault():
+			case *rules == *ATCDefaultRules():
 				s = "ATC original"
 			}
 			return fmt.Sprintf("Rules %s[%s]", PAD_SPACE[0:18-len(s)], s)
 		}, action: func() {
 			RunMenu("Rules", []MenuEntry{
 				MenuEntry{key: 'D', text: "Default", action: func() {
-					setup = DefaultSetup()
+					rules = DefaultRules()
 					CloseMenu()
 				}},
 				MenuEntry{key: 'A', text: "ATC original", action: func() {
-					setup = SetupATCDefault()
+					rules = ATCDefaultRules()
 					CloseMenu()
 				}},
 			})
@@ -275,15 +275,15 @@ func main() {
 				MenuEntry{text: "Main Menu", action: CloseMenu},
 				MenuEntry{},
 
-				MenuBoolText('J', &setup.have_jet, "Jet"),
-				MenuBoolText('P', &setup.have_prop, "Prop"),
-				MenuBoolText('H', &setup.have_heli, "Heli"),
-				MenuBoolText('B', &setup.have_blackbird, "Blackbird"),
+				MenuBoolText('J', &rules.have_jet, "Jet"),
+				MenuBoolText('P', &rules.have_prop, "Prop"),
+				MenuBoolText('H', &rules.have_heli, "Heli"),
+				MenuBoolText('B', &rules.have_blackbird, "Blackbird"),
 
 				MenuEntry{},
-				MenuBoolText('S', &setup.show_pending_planes, "Show pending planes"),
-				MenuBoolText('.', &setup.delayed_commands, ". delays commands"),
-				MenuBoolText(',', &setup.skip_to_next_tick, ", skips to next tick"),
+				MenuBoolText('S', &rules.show_pending_planes, "Show pending planes"),
+				MenuBoolText('.', &rules.delayed_commands, ". delays commands"),
+				MenuBoolText(',', &rules.skip_to_next_tick, ", skips to next tick"),
 			})
 		}},
 

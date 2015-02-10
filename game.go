@@ -1,6 +1,6 @@
 package main
 
-type GameSetup struct {
+type GameRules struct {
 	duration         Ticks
 	last_plane_start Ticks
 
@@ -17,8 +17,8 @@ type GameSetup struct {
 	show_pending_planes bool
 }
 
-func SetupATCDefault() *GameSetup {
-	return &GameSetup{
+func ATCDefaultRules() *GameRules {
+	return &GameRules{
 		duration:         50 * Minutes,
 		last_plane_start: 15 * Minutes,
 		num_planes:       26,
@@ -35,8 +35,8 @@ func SetupATCDefault() *GameSetup {
 	}
 }
 
-func DefaultSetup() *GameSetup {
-	return &GameSetup{
+func DefaultRules() *GameRules {
+	return &GameRules{
 		duration:         90 * Minutes,
 		last_plane_start: 15 * Minutes,
 		num_planes:       30,
@@ -59,7 +59,7 @@ type EndReason struct {
 }
 
 type GameState struct {
-	setup *GameSetup
+	rules *GameRules
 	board *Board
 
 	seed int64
@@ -103,7 +103,7 @@ func (g *GameState) doTick() *EndReason {
 
 		if !p.IsDone() {
 			remaining += 1
-		} else if p.callsign != 0 && g.setup.num_planes > 26 {
+		} else if p.callsign != 0 && g.rules.num_planes > 26 {
 			// plane is done; reuse callsign
 			g.reusable_callsigns = append(g.reusable_callsigns, p.callsign)
 			p.callsign = 0
@@ -163,26 +163,26 @@ func (g *GameState) String() string {
 	return res
 }
 
-func NewGame(setup *GameSetup, board *Board, seed int64) *GameState {
+func NewGame(rules *GameRules, board *Board, seed int64) *GameState {
 
 	slowest_plane_ticks := 1
-	for _, pt := range PlaneTypes(setup) {
+	for _, pt := range PlaneTypes(rules) {
 		slowest_plane_ticks = Max(slowest_plane_ticks, int(pt.ticks_per_move))
 	}
 
 	// allow the slowest plane to cross the board
-	setup.last_plane_start = Ticks(Max(
-		int(setup.last_plane_start),
+	rules.last_plane_start = Ticks(Max(
+		int(rules.last_plane_start),
 		board.width*slowest_plane_ticks))
 
-	planes := MakePlanes(setup, board, seed)
+	planes := MakePlanes(rules, board, seed)
 
 	var game = &GameState{
 		seed:  seed,
-		setup: setup,
+		rules: rules,
 		board: board,
 
-		clock:  setup.duration,
+		clock:  rules.duration,
 		planes: planes,
 	}
 	return game

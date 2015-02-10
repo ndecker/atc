@@ -129,18 +129,18 @@ var (
 	}
 )
 
-func PlaneTypes(setup *GameSetup) []*PlaneType {
+func PlaneTypes(rules *GameRules) []*PlaneType {
 	plane_types := make([]*PlaneType, 0, 3)
-	if setup.have_jet {
+	if rules.have_jet {
 		plane_types = append(plane_types, &PLANE_TYPE_JET)
 	}
-	if setup.have_prop {
+	if rules.have_prop {
 		plane_types = append(plane_types, &PLANE_TYPE_PROP)
 	}
-	if setup.have_heli {
+	if rules.have_heli {
 		plane_types = append(plane_types, &PLANE_TYPE_HELI)
 	}
-	if setup.have_blackbird {
+	if rules.have_blackbird {
 		plane_types = append(plane_types, &PLANE_TYPE_BLACKBIRD)
 	}
 	return plane_types

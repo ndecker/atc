@@ -83,7 +83,7 @@ func DrawPlanes(game *GameState) bool {
 	colors := make([]termbox.Attribute, 0, len(game.planes))
 
 	for _, p := range game.planes {
-		if !game.setup.show_pending_planes && p.state == StatePending {
+		if !game.rules.show_pending_planes && p.state == StatePending {
 			continue
 		}
 
