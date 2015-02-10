@@ -71,18 +71,20 @@ func DrawGame(game *GameState) {
 	// always show last commanded plane on top
 	printPlane(game.ci.last_commanded_plane, termbox.ColorDefault)
 
-	// TODO: dynamic positions
-	print(left+0, top+21, game.clock.String())
+	x := left
+	y := game.board.height + 2
+
+	x = print(x, y, game.clock.String(), "  ")
 	if game.end_reason != nil {
-		x := print(left+8, top+21, "-- ", game.end_reason.message, " --")
-		print(left+8, top+22, "(Press Esc to quit / R to restart same game)")
+		x0 := print(x, y+0, "-- ", game.end_reason.message, " --")
 
 		for _, p := range game.end_reason.planes {
 			printPlane(p, termbox.ColorRed)
-			x = print(x, top+21, " ", p.Marker())
+			x0 = print(x0, y, " ", p.Marker())
 		}
+		print(x, y+1, "(Press Esc to quit / R to restart same game)")
 	} else {
-		print(left+8, top+21, game.ci.StatusLine())
+		print(x, y, game.ci.StatusLine())
 	}
 }
 
