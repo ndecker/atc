@@ -10,7 +10,7 @@ const (
 	BORDER_V = 1
 )
 
-func DisplayWindow(title string, footer string, lines []string, colors []termbox.Attribute) {
+func DrawWindow(title string, footer string, lines []string, colors []termbox.Attribute) {
 	termw, termh := termbox.Size()
 	contw, conth := termw-2*BORDER_H, termh-2*BORDER_V
 
@@ -100,14 +100,14 @@ func DrawPlanes(game *GameState) bool {
 	if len(lines) == 0 {
 		return false
 	}
-	DisplayWindow("Planes", "", lines, colors)
+	DrawWindow("Planes", "", lines, colors)
 	return true
 }
 
 func DrawHelp(screen int) {
 	screen = screen % len(HELP)
 	lines := SplitLines(HELP[screen])
-	DisplayWindow(
+	DrawWindow(
 		fmt.Sprintf("Help (page %d of %d)", screen+1, len(HELP)),
 		"Space: next page", lines, nil)
 }

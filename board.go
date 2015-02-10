@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	DEFAULT_BOARD *Board = ParseBoard(`
+	DEFAULT_BOARD *Board = ParseBoard("ATC Standard", `
         .....1....2.........3....
         .........................
         .........................
@@ -43,7 +43,7 @@ var (
         2: =-=-W  %-%-NW =-%-W %-=-NW
     `)
 
-	CROSSWAYS_BOARD *Board = ParseBoard(`
+	CROSSWAYS_BOARD *Board = ParseBoard("Crossways", `
         .....4.........6.........8.....
         ...............................
         ...............................
@@ -81,6 +81,8 @@ var (
 )
 
 type Board struct {
+	name string
+
 	width  int
 	height int
 
@@ -145,8 +147,9 @@ func (r Route) String() string {
 	return fmt.Sprintf("%s-%s", string(r.entry), string(r.exit))
 }
 
-func ParseBoard(s string, rs string) *Board {
+func ParseBoard(name string, s string, rs string) *Board {
 	b := &Board{
+		name:        name,
 		entrypoints: make(map[rune]*EntryPoint),
 		navaids:     make([]Position, 0),
 		routes:      make([]Route, 0),

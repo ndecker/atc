@@ -174,8 +174,9 @@ func usage() {
 }
 
 func main() {
-
+	single_game := false
 	setup := DefaultSetup()
+	board := DEFAULT_BOARD
 
 	switch len(os.Args) {
 	case 2:
@@ -185,6 +186,7 @@ func main() {
 			return
 		}
 		setup.duration = Ticks(time) * Minutes
+		single_game = true
 	case 3:
 		time, err := strconv.Atoi(os.Args[1])
 		if err != nil {
@@ -198,6 +200,7 @@ func main() {
 		}
 		setup.duration = Ticks(time) * Minutes
 		setup.num_planes = planes
+		single_game = true
 	}
 
 	signal.Notify(sigterm, syscall.SIGTERM)
@@ -215,7 +218,47 @@ func main() {
 		}
 	}()
 
-	board := CROSSWAYS_BOARD
-	seed := RandSeed()
-	RunGame(setup, board, seed)
+	if single_game {
+		seed := RandSeed()
+		RunGame(setup, board, seed)
+		return
+	}
+
+	RunMenu("ATC - Air Traffic Control", []MenuEntry{
+		MenuEntry{key: 'S', text: "Start", action: func() {
+			seed := RandSeed()
+			RunGame(setup, board, seed)
+		}},
+		MenuEntry{key: 'B', textf: func() string {
+			return fmt.Sprintf("Choose Board [%s]", board.name)
+		}, action: func() {
+			RunMenu("Choose Board", []MenuEntry{
+				MenuEntry{key: 'S', text: "ATC Standard", action: func() {
+					board = DEFAULT_BOARD
+					CloseMenu()
+				}},
+				MenuEntry{key: 'C', text: "Crossways", action: func() {
+					board = CROSSWAYS_BOARD
+					CloseMenu()
+				}},
+			})
+		}},
+
+		MenuEntry{},
+		MenuEntry{key: 'O', text: "Options", action: func() {
+			RunMenu("Options", []MenuEntry{
+				MenuEntry{text: "Return", action: CloseMenu},
+				MenuEntry{},
+
+				MenuBoolText('J', &setup.have_jet, "Jet enabled", "Jet disabled"),
+				MenuBoolText('P', &setup.have_prop, "Prop enabled", "Prop disabled"),
+				MenuBoolText('H', &setup.have_heli, "Heli enabled", "Prop disabled"),
+				MenuBoolText('B', &setup.have_blackbird, "Blackbird enabled", "Blackbird disabled"),
+			})
+		}},
+
+		MenuEntry{},
+		MenuEntry{key: 'Q', text: "Quit", action: CloseMenu},
+	})
+
 }
