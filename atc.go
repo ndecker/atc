@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	termbox "github.com/nsf/termbox-go"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 	"unicode"
@@ -165,7 +167,37 @@ func RunGame(setup *GameSetup, board *Board, seed int64) {
 	}
 }
 
+func usage() {
+	fmt.Println("usage: atc [time [planes]]")
+}
+
 func main() {
+
+	setup := DefaultSetup()
+
+	switch len(os.Args) {
+	case 2:
+		time, err := strconv.Atoi(os.Args[1])
+		if err != nil {
+			usage()
+			return
+		}
+		setup.duration = Ticks(time) * Minutes
+	case 3:
+		time, err := strconv.Atoi(os.Args[1])
+		if err != nil {
+			usage()
+			return
+		}
+		planes, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			usage()
+			return
+		}
+		setup.duration = Ticks(time) * Minutes
+		setup.num_planes = planes
+	}
+
 	signal.Notify(sigterm, syscall.SIGTERM)
 
 	err := termbox.Init()
@@ -181,7 +213,6 @@ func main() {
 		}
 	}()
 
-	setup := DefaultSetup()
 	board := CROSSWAYS_BOARD
 	seed := RandSeed()
 	RunGame(setup, board, seed)
