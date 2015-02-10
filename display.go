@@ -85,28 +85,6 @@ func DrawHelp() {
 	}
 }
 
-func WaitForContinue() bool {
-	// Enter, Space, Esc, Ctrl-C, Tab
-	for {
-		ev := <-events
-		switch ev.Type {
-		case termbox.EventKey:
-			switch ev.Ch {
-			case 0:
-				switch ev.Key {
-				case termbox.KeyEsc,
-					termbox.KeyCtrlC:
-					return false
-				case termbox.KeySpace,
-					termbox.KeyEnter,
-					termbox.KeyTab:
-					return true
-				}
-			}
-		}
-	}
-}
-
 func printS(x, y int, s string) {
 	for _, r := range s {
 		termbox.SetCell(x, y, r,

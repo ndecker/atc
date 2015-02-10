@@ -57,7 +57,10 @@ func (p *Plane) Tick(game *GameState) {
 	if p.IsConsumingFuel() {
 		p.fuel_left -= 1
 		if p.fuel_left == 0 {
-			game.end_reason = fmt.Sprintf("fuel exhausted %s", p.Marker())
+			game.end_reason = &EndReason{
+				message: fmt.Sprintf("fuel exhausted %s", p.Marker()),
+				planes:  []*Plane{p},
+			}
 			return
 		}
 	}
@@ -169,14 +172,14 @@ func (p *Plane) UpdatePosition(game *GameState) {
 
 	if !game.board.Contains(next_pos) {
 		// left the playing field
-		if p.Position != p.exit.Position {
-			game.end_reason = fmt.Sprintf("Boundary Error -- %c%d", p.callsign, p.height)
+		if p.Position != p.exit.Position || p.height != 5 {
+			game.end_reason = &EndReason{
+				message: fmt.Sprintf("Boundary Error -- %c%d", p.callsign, p.height),
+				planes:  []*Plane{p},
+			}
 			return
 		}
-		if p.height != 5 {
-			game.end_reason = fmt.Sprintf("Boundary Error -- %c%d", p.callsign, p.height)
-			return
-		}
+
 		p.state = StateDeparted
 		return
 	}

@@ -26,10 +26,7 @@ func DrawGame(game *GameState) {
 
 	for x := 0; x < game.board.width; x += 1 {
 		for y := 0; y < game.board.height; y += 1 {
-			termbox.SetCell(left+2*x, top+y, '·',
-				termbox.ColorBlue, termbox.ColorDefault)
-			termbox.SetCell(left+2*x+1, top+y, ' ',
-				termbox.ColorBlue, termbox.ColorDefault)
+			FprintS(left+2*x, top+y, "· ", termbox.ColorBlue)
 		}
 	}
 
@@ -43,6 +40,16 @@ func DrawGame(game *GameState) {
 
 	col := left + game.board.width*2 + 2
 	row := top
+
+	printPlane := func(plane *Plane, red bool) {
+		if plane != nil && plane.IsFlying() {
+			if !red {
+				printS(left+plane.Position.x*2, top+plane.Position.y, plane.Marker())
+			} else {
+				FprintS(left+plane.Position.x*2, top+plane.Position.y, plane.Marker(), termbox.ColorRed)
+			}
+		}
+	}
 
 	for _, p := range game.planes {
 		if row >= termh {
@@ -60,23 +67,21 @@ func DrawGame(game *GameState) {
 
 		}
 
-		if p.IsFlying() {
-			print(left+p.Position.x*2, top+p.Position.y, p.Marker())
-		}
+		printPlane(p, false)
 	}
 
-	if game.ci.last_commanded_plane != nil {
-		// always show last commanded plane on top
-		p := game.ci.last_commanded_plane
-		if p.IsFlying() {
-			print(left+p.Position.x*2, top+p.Position.y, p.Marker())
-		}
-	}
+	// always show last commanded plane on top
+	printPlane(game.ci.last_commanded_plane, false)
 
 	// TODO: dynamic positions
 	print(left+0, top+21, game.clock.String())
-	if game.end_reason != "" {
-		print(left+8, top+21, game.end_reason)
+	if game.end_reason != nil {
+		print(left+8, top+21, game.end_reason.message)
+		print(left+8, top+22, "(Press Esc to quit)")
+
+		for _, p := range game.end_reason.planes {
+			printPlane(p, true)
+		}
 	} else {
 		print(left+8, top+21, game.ci.StatusLine())
 	}
@@ -145,13 +150,6 @@ func GameLoop(game *GameState) {
 		case <-sigterm:
 			return
 		}
-
-		if game.end_reason != "" {
-			DrawGame(game)
-			termbox.Flush()
-			<-events
-			return
-		}
 	}
 }
 
@@ -171,13 +169,8 @@ func main() {
 		}
 	}()
 
-	for {
-		seed := RandSeed()
-		game := NewGame(DEFAULT_SETUP, seed)
+	seed := RandSeed()
+	game := NewGame(DEFAULT_SETUP, seed)
 
-		GameLoop(game)
-		if !WaitForContinue() {
-			return
-		}
-	}
+	GameLoop(game)
 }

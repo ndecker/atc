@@ -37,6 +37,11 @@ var DEFAULT_SETUP = GameSetup{
 	show_planes: true,
 }
 
+type EndReason struct {
+	message string
+	planes  []*Plane
+}
+
 type GameState struct {
 	setup GameSetup
 	board *Board
@@ -44,7 +49,7 @@ type GameState struct {
 	seed int64
 
 	clock      Ticks
-	end_reason string
+	end_reason *EndReason
 
 	ci CommandInterpreter
 
@@ -53,10 +58,13 @@ type GameState struct {
 }
 
 func (g *GameState) Tick() {
+	if g.end_reason != nil {
+		return
+	}
 	g.clock.Tick()
 
 	if g.clock == 0 {
-		g.end_reason = "Time is up"
+		g.end_reason = &EndReason{message: "Time is up"}
 	}
 
 	// TODO: update once before first tick
@@ -66,7 +74,7 @@ func (g *GameState) Tick() {
 
 		if p.callsign == 0 && (p.state == StateIncoming || p.state == StateWaiting) {
 			if len(g.reusable_callsigns) == 0 {
-				g.end_reason = "Too many active planes"
+				g.end_reason = &EndReason{message: "Too many active planes"}
 			}
 			p.callsign = g.reusable_callsigns[0]
 			g.reusable_callsigns = g.reusable_callsigns[1:]
@@ -75,7 +83,7 @@ func (g *GameState) Tick() {
 		if !p.IsDone() {
 			remaining += 1
 		} else if p.callsign != 0 && g.setup.num_planes > 26 {
-			// plane is done; reusable callsign
+			// plane is done; reuse callsign
 			g.reusable_callsigns = append(g.reusable_callsigns, p.callsign)
 			p.callsign = 0
 		}
@@ -91,13 +99,16 @@ func (g *GameState) Tick() {
 			}
 
 			if p1.Collides(p2) {
-				g.end_reason = fmt.Sprintf("-- Conflict -- %s %s", p1.Marker(), p2.Marker())
+				g.end_reason = &EndReason{
+					message: fmt.Sprintf("-- Conflict -- %s %s", p1.Marker(), p2.Marker()),
+					planes:  []*Plane{p1, p2},
+				}
 			}
 		}
 	}
 
 	if remaining == 0 {
-		g.end_reason = "Won"
+		g.end_reason = &EndReason{message: "Won"}
 	}
 
 	// apply delayed commands
@@ -105,6 +116,9 @@ func (g *GameState) Tick() {
 }
 
 func (g *GameState) KeyPressed(k rune) {
+	if g.end_reason != nil {
+		return
+	}
 	g.ci.KeyPressed(g, k)
 }
 
