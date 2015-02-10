@@ -5,107 +5,133 @@ import (
 	termbox "github.com/nsf/termbox-go"
 )
 
-func DisplayWindow(width, height int) (int, int) {
+const (
+	BORDER_H = 2
+	BORDER_V = 1
+)
+
+func DisplayWindow(title string, footer string, lines []string, colors []termbox.Attribute) {
 	termw, termh := termbox.Size()
+	contw, conth := termw-2*BORDER_H, termh-2*BORDER_V
 
-	left := Max((termw-width-4)/2, 0)
-	right := left + width + 2
-	top := Max((termh-height-2)/2, 0)
-	bottom := top + height + 2
+	num_lines := len(lines)
+	max_len := 0
+	for _, line := range lines {
+		max_len = Max(max_len, len(line))
+	}
 
+	cols := 1
+	rows := num_lines
+	for (cols+1)*max_len+cols < contw && rows > conth {
+		cols++
+		rows = (num_lines + 1) / cols
+	}
+
+	contw = cols*max_len + (cols - 1)
+	conth = rows
+
+	if len(title)+2 > contw || len(footer)+2 > contw {
+		contw = Max(len(title), len(footer))
+	}
+
+	left := Max((termw-contw-2*BORDER_H)/2, 0)
+	right := left + contw + BORDER_H
+	top := Max((termh-conth-2*BORDER_V)/2, 0)
+	bottom := top + conth + BORDER_V
+
+	// draw border
 	for x := left; x <= right; x += 1 {
-		printS(x, top, "-")
-		printS(x, bottom, "-")
+		print(x, top, "-")
+		print(x, bottom, "-")
 	}
 
 	for y := top + 1; y <= bottom-1; y += 1 {
-		printS(left, y, "|")
-		printS(right, y, "|")
+		print(left, y, "|")
+		print(right, y, "|")
 
+		// clear content area
 		for x := left + 1; x <= right-1; x += 1 {
-			printS(x, y, " ")
+			print(x, y, " ")
 		}
 	}
 
-	return left + 2, top + 1
+	if title != "" {
+		print(left+contw/2-len(title)/2, top, " ", title, " ")
+	}
+	if footer != "" {
+		print(left+contw/2-len(footer)/2, bottom, " ", footer, " ")
+	}
+
+	left += BORDER_H
+	top += BORDER_V
+
+	for pos, line := range lines {
+		color := termbox.ColorDefault
+		if pos < len(colors) {
+			color = colors[pos]
+		}
+		printC(
+			left+(pos/rows)*(max_len+1),
+			top+(pos%rows),
+			color, line)
+	}
 }
 
 func DrawPlanes(game *GameState) {
-	COL_WIDTH := 26
+	lines := make([]string, 0, len(game.planes))
+	colors := make([]termbox.Attribute, 0, len(game.planes))
 
-	num_planes := len(game.planes)
-	var cols int
-	switch {
-	case num_planes < 20:
-		cols = 1
-	case num_planes < 60:
-		cols = 2
-	case num_planes < 100:
-		cols = 3
-	case num_planes < 150:
-		cols = 4
-	default:
-		cols = 5
-	}
-
-	rows := num_planes / cols
-	if num_planes%cols != 0 {
-		rows += 1
-	}
-
-	x, y := DisplayWindow(cols*COL_WIDTH, rows)
-
-	print(x, y, "Planes:")
-
-	x += 1
-	y += 1
-	for pnr, p := range game.planes {
-		row, col := pnr%rows, pnr/rows
-		if p.IsActive() {
-			printS(x+(col*COL_WIDTH), y+row, p.String())
-		} else if p.IsDone() {
-			FprintS(x+(col*COL_WIDTH), y+row, p.String(), termbox.ColorGreen)
-		} else {
-			FprintS(x+(col*COL_WIDTH), y+row, p.String(), termbox.ColorBlue)
+	for _, p := range game.planes {
+		lines = append(lines, p.String())
+		switch {
+		case p.IsActive():
+			colors = append(colors, termbox.ColorDefault)
+		case p.IsDone():
+			colors = append(colors, termbox.ColorGreen)
+		default:
+			colors = append(colors, termbox.ColorBlue)
 		}
 	}
-	termbox.Flush()
+	DisplayWindow("Planes", "", lines, colors)
 }
 
-func DrawHelp() {
-	lines, maxlen := SplitLines(COMMAND_HELP)
-	x, y := DisplayWindow(maxlen+4, len(lines)+1)
+func DrawHelp(screen int) {
+	screen = screen % len(HELP)
+	lines := SplitLines(HELP[screen])
+	DisplayWindow(
+        fmt.Sprintf("Help (page %d of %d)", screen+1, len(HELP)),
+		"Space: next page", lines, nil)
+}
 
-	print(x, y, "Help")
-	y += 1
-
-	for _, l := range lines {
-		print(x+1, y, l)
-		y += 1
+func DialogKeys(ev termbox.Event, visible *bool, screen *int) {
+	switch ev.Ch {
+	case 0:
+		switch ev.Key {
+		case termbox.KeyEsc,
+			termbox.KeyBackspace, termbox.KeyBackspace2,
+			termbox.KeyTab:
+			*visible = false
+		case termbox.KeySpace,
+			termbox.KeyEnter:
+			if screen != nil {
+				*screen++
+			}
+		}
+	case 'x', 'X', 'q', 'Q':
+		*visible = false
 	}
 }
 
-func printS(x, y int, s string) {
-	for _, r := range s {
-		termbox.SetCell(x, y, r,
-			termbox.ColorDefault, termbox.ColorDefault)
-		x += 1
-	}
+func print(x, y int, strings ...string) {
+    printC(x, y, termbox.ColorDefault, strings...)
 }
 
-func print(x, y int, args ...interface{}) {
-	s := fmt.Sprint(args...)
-	for _, r := range s {
-		termbox.SetCell(x, y, r,
-			termbox.ColorDefault, termbox.ColorDefault)
-		x += 1
-	}
-}
-
-func FprintS(x, y int, s string, fg termbox.Attribute) {
-	for _, r := range s {
-		termbox.SetCell(x, y, r,
-			fg, termbox.ColorDefault)
-		x += 1
-	}
+func printC(x, y int, fg termbox.Attribute, strings ...string) {
+    for _, s := range strings {
+        for _, r := range s {
+            termbox.SetCell(x, y, r,
+                fg, termbox.ColorDefault)
+            x += 1
+        }
+    }
 }

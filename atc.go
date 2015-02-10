@@ -23,10 +23,11 @@ func DrawGame(game *GameState) {
 
 	height := game.board.height + 2
 	top := (termh - height) / 2
+	bottom := top + height
 
 	for x := 0; x < game.board.width; x += 1 {
 		for y := 0; y < game.board.height; y += 1 {
-			FprintS(left+2*x, top+y, "· ", termbox.ColorBlue)
+			printC(left+2*x, top+y, termbox.ColorBlue, "· ")
 		}
 	}
 
@@ -41,37 +42,32 @@ func DrawGame(game *GameState) {
 	col := left + game.board.width*2 + 2
 	row := top
 
-	printPlane := func(plane *Plane, red bool) {
+	printPlane := func(plane *Plane, color termbox.Attribute) {
 		if plane != nil && plane.IsFlying() {
-			if !red {
-				printS(left+plane.Position.x*2, top+plane.Position.y, plane.Marker())
-			} else {
-				FprintS(left+plane.Position.x*2, top+plane.Position.y, plane.Marker(), termbox.ColorRed)
-			}
+            printC(left+plane.Position.x*2, top+plane.Position.y,
+                color, plane.Marker())
 		}
 	}
 
 	for _, p := range game.planes {
-		if row >= termh {
-			row = 0
+		if row >= bottom {
+			row = top
 			col += 10
 		}
 
-		// TODO: two column?
 		if p.IsVisible() {
 			print(col, row, p.Flightplan(), " *")
 			row += 1
 		} else if p.IsActive() {
 			print(col, row, p.Flightplan())
 			row += 1
-
 		}
 
-		printPlane(p, false)
+		printPlane(p, termbox.ColorDefault)
 	}
 
 	// always show last commanded plane on top
-	printPlane(game.ci.last_commanded_plane, false)
+	printPlane(game.ci.last_commanded_plane, termbox.ColorDefault)
 
 	// TODO: dynamic positions
 	print(left+0, top+21, game.clock.String())
@@ -80,7 +76,7 @@ func DrawGame(game *GameState) {
 		print(left+8, top+22, "(Press Esc to quit / R to restart same game)")
 
 		for _, p := range game.end_reason.planes {
-			printPlane(p, true)
+			printPlane(p, termbox.ColorRed)
 		}
 	} else {
 		print(left+8, top+21, game.ci.StatusLine())
@@ -95,12 +91,13 @@ func RunGame(setup GameSetup, seed int64) {
 	game := NewGame(DEFAULT_SETUP, seed)
 
 	var help_visible bool = false
+	var help_screen int = 0
 	var planes_visible bool = false
 
 	for {
 		DrawGame(game)
 		if help_visible {
-			DrawHelp()
+			DrawHelp(help_screen)
 		}
 		if planes_visible {
 			DrawPlanes(game)
@@ -115,42 +112,48 @@ func RunGame(setup GameSetup, seed int64) {
 		case ev := <-events:
 			switch ev.Type {
 			case termbox.EventKey:
-				switch ev.Ch {
-				case 0:
-					switch ev.Key {
-					case termbox.KeyEsc, termbox.KeyCtrlC:
-						return // end game
-					case termbox.KeySpace,
-						termbox.KeyEnter,
-						termbox.KeyBackspace, termbox.KeyBackspace2:
-						if help_visible || planes_visible {
-							help_visible = false
-							planes_visible = false
-						} else {
-							game.ci.Clear()
-						}
-					case termbox.KeyTab:
-						if game.setup.show_planes {
-							planes_visible = !planes_visible
-						}
-					}
-				case ',':
-					game.Tick()
+				switch {
+				case ev.Ch == 0 && ev.Key == termbox.KeyCtrlC:
+					// always handle Ctrl-C
+					return
 
-					if game.setup.skip_to_next_tick {
-						timer.Reset(tick_time)
-					}
-				case '?':
-					help_visible = !help_visible
-				case 'R', 'r':
-					if game.end_reason != nil {
-						game = NewGame(setup, seed)
-					} else {
+				case help_visible:
+					DialogKeys(ev, &help_visible, &help_screen)
+				case planes_visible:
+					DialogKeys(ev, &planes_visible, nil)
+				default:
+					switch ev.Ch {
+					case 0:
+						switch ev.Key {
+						case termbox.KeyEsc, termbox.KeyCtrlC:
+							return // end game
+						case termbox.KeySpace,
+							termbox.KeyEnter:
+							game.ci.Clear()
+						case termbox.KeyBackspace, termbox.KeyBackspace2:
+							game.ci.Clear()
+						case termbox.KeyTab:
+							planes_visible = game.setup.show_planes
+						}
+					case ',':
+						game.Tick()
+
+						if game.setup.skip_to_next_tick {
+							timer.Reset(tick_time)
+						}
+					case '?':
+						help_visible = true
+					case 'R', 'r':
+						if game.end_reason != nil {
+							game = NewGame(setup, seed)
+						} else {
+							game.KeyPressed(unicode.ToUpper(ev.Ch))
+						}
+					default:
 						game.KeyPressed(unicode.ToUpper(ev.Ch))
 					}
-				default:
-					game.KeyPressed(unicode.ToUpper(ev.Ch))
 				}
+
 			case termbox.EventResize:
 				// nothing; just redraw
 			}
