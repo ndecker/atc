@@ -75,6 +75,7 @@ func (g *GameState) Tick() {
 		if p.callsign == 0 && (p.state == StateIncoming || p.state == StateWaiting) {
 			if len(g.reusable_callsigns) == 0 {
 				g.end_reason = &EndReason{message: "Too many active planes"}
+				return
 			}
 			p.callsign = g.reusable_callsigns[0]
 			g.reusable_callsigns = g.reusable_callsigns[1:]
