@@ -17,9 +17,27 @@ type GameSetup struct {
 	show_pending_planes bool
 }
 
+func SetupATCDefault() *GameSetup {
+	return &GameSetup{
+		duration:         50 * Minutes,
+		last_plane_start: 15 * Minutes,
+		num_planes:       26,
+
+		skip_to_next_tick: false,
+		delayed_commands:  false,
+
+		have_jet:       true,
+		have_prop:      true,
+		have_heli:      false,
+		have_blackbird: false,
+
+		show_pending_planes: false,
+	}
+}
+
 func DefaultSetup() *GameSetup {
 	return &GameSetup{
-		duration:         25 * Minutes,
+		duration:         90 * Minutes,
 		last_plane_start: 15 * Minutes,
 		num_planes:       30,
 

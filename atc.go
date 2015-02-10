@@ -243,9 +243,30 @@ func main() {
 			RunGame(setup, board, seed)
 		}},
 		MenuEntry{key: 'B', textf: func() string {
-			return fmt.Sprintf("Choose Board [%s]", board.name)
+			return fmt.Sprintf("Board %s[%s]", PAD_SPACE[0:18-len(board.name)], board.name)
 		}, action: func() {
 			RunMenu("Choose Board", board_menu)
+		}},
+		MenuEntry{key: 'S', textf: func() string {
+			var s string = "Custom"
+			switch {
+			case *setup == *DefaultSetup():
+				s = "Default"
+			case *setup == *SetupATCDefault():
+				s = "ATC original"
+			}
+			return fmt.Sprintf("Rules %s[%s]", PAD_SPACE[0:18-len(s)], s)
+		}, action: func() {
+			RunMenu("Rules", []MenuEntry{
+				MenuEntry{key: 'D', text: "Default", action: func() {
+					setup = DefaultSetup()
+					CloseMenu()
+				}},
+				MenuEntry{key: 'A', text: "ATC original", action: func() {
+					setup = SetupATCDefault()
+					CloseMenu()
+				}},
+			})
 		}},
 
 		MenuEntry{},
