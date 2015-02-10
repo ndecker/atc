@@ -17,15 +17,15 @@ type GameSetup struct {
 	have_prop bool
 	have_heli bool
 
-	show_planes_at_start bool
+	show_planes bool
 
 	commands [][]Command
 }
 
 var DEFAULT_SETUP = GameSetup{
-	duration:         60 * Minutes,
+	duration:         50 * Minutes,
 	last_plane_start: 15 * Minutes,
-	num_planes:       50,
+	num_planes:       80,
 
 	skip_to_next_tick: true,
 	delayed_commands:  true,
@@ -34,7 +34,7 @@ var DEFAULT_SETUP = GameSetup{
 	have_prop: true,
 	have_heli: true,
 
-	show_planes_at_start: true,
+	show_planes: true,
 }
 
 type GameState struct {
@@ -72,9 +72,9 @@ func (g *GameState) Tick() {
 			g.reusable_callsigns = g.reusable_callsigns[1:]
 		}
 
-		if p.state != StateLanded && p.state != StateDeparted {
+		if !p.IsDone() {
 			remaining += 1
-		} else if p.callsign != 0 {
+		} else if p.callsign != 0 && g.setup.num_planes > 26 {
 			// plane is done; reusable callsign
 			g.reusable_callsigns = append(g.reusable_callsigns, p.callsign)
 			p.callsign = 0

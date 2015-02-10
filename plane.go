@@ -72,7 +72,7 @@ func (p *Plane) Tick(game *GameState) {
 	switch p.state {
 	case StatePending:
 		// Wait until visible
-		if (game.clock - p.start) < p.typ.ticks_pending {
+		if (game.clock - p.start) <= p.typ.ticks_pending {
 			if p.entry.is_airport {
 				p.state = StateWaiting
 				p.height = 0
@@ -284,6 +284,11 @@ func (p Plane) IsConsumingFuel() bool {
 		p.state == StateAproach
 }
 
+func (p Plane) IsDone() bool {
+	return p.state == StateLanded ||
+		p.state == StateDeparted
+}
+
 func (p Plane) String() string {
 	return fmt.Sprintf("%s %s",
 		p.start, p.State())
@@ -324,7 +329,11 @@ func (p Plane) State() string {
 		res += fmt.Sprintf(" [%s]",
 			p.Direction.Right(p.want_turn))
 	}
+	return res
+}
 
+func (p Plane) StateMessage() string {
+	res := p.State()
 	switch {
 	case p.state == StateWaiting:
 		res += " -- Awaiting Takeoff --"

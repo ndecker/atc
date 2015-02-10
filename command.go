@@ -27,6 +27,7 @@ const (
         Esc              quit game
         .                advance time
         ?                show help
+        Tab              show planes (if enabled)
     `
 )
 
@@ -49,7 +50,7 @@ func (c *Command) Apply(p *Plane) string {
 	}
 
 	if c.command == 'S' && p.IsActive() {
-		return p.State()
+		return p.StateMessage()
 	}
 
 	if !p.AcceptsCommands() {
@@ -65,8 +66,7 @@ func (c *Command) Apply(p *Plane) string {
 		res = p.DoTurn(c.arg)
 	case 'A': // change altitude 0-5 (0: aproach)
 		res = p.DoHeight(c.arg)
-	case 'S':
-		return p.State()
+	// case 'S': handled above
 	case 'M': // maintain current altitude
 		res = p.DoHeight(p.height)
 	case 'P': // proceed current heading

@@ -9,9 +9,9 @@ func DisplayWindow(width, height int) (int, int) {
 	termw, termh := termbox.Size()
 
 	left := Max((termw-width-4)/2, 0)
-	right := left + width + 1
+	right := left + width + 2
 	top := Max((termh-height-2)/2, 0)
-	bottom := top + height + 1
+	bottom := top + height + 2
 
 	for x := left; x <= right; x += 1 {
 		printS(x, top, "-")
@@ -30,20 +30,46 @@ func DisplayWindow(width, height int) (int, int) {
 	return left + 2, top + 1
 }
 
-func ShowPlanes(game *GameState) {
-	x, y := DisplayWindow(32, len(game.planes)+1)
+func DrawPlanes(game *GameState) {
+	COL_WIDTH := 26
 
-	x += 1
+	num_planes := len(game.planes)
+	var cols int
+	switch {
+	case num_planes < 20:
+		cols = 1
+	case num_planes < 60:
+		cols = 2
+	case num_planes < 100:
+		cols = 3
+	case num_planes < 150:
+		cols = 4
+	default:
+		cols = 5
+	}
+
+	rows := num_planes / cols
+	if num_planes%cols != 0 {
+		rows += 1
+	}
+
+	x, y := DisplayWindow(cols*COL_WIDTH, rows)
+
 	print(x, y, "Planes:")
 
 	x += 1
 	y += 1
-	for row, p := range game.planes {
-		print(x, y+row, p)
+	for pnr, p := range game.planes {
+		row, col := pnr%rows, pnr/rows
+		if p.IsActive() {
+			printS(x+(col*COL_WIDTH), y+row, p.String())
+		} else if p.IsDone() {
+			FprintS(x+(col*COL_WIDTH), y+row, p.String(), termbox.ColorGreen)
+		} else {
+			FprintS(x+(col*COL_WIDTH), y+row, p.String(), termbox.ColorBlue)
+		}
 	}
 	termbox.Flush()
-	WaitForContinue()
-
 }
 
 func DrawHelp() {
@@ -60,7 +86,7 @@ func DrawHelp() {
 }
 
 func WaitForContinue() bool {
-	// Enter, Space, Esc, Ctrl-C
+	// Enter, Space, Esc, Ctrl-C, Tab
 	for {
 		ev := <-events
 		switch ev.Type {
@@ -72,7 +98,8 @@ func WaitForContinue() bool {
 					termbox.KeyCtrlC:
 					return false
 				case termbox.KeySpace,
-					termbox.KeyEnter:
+					termbox.KeyEnter,
+					termbox.KeyTab:
 					return true
 				}
 			}
@@ -93,6 +120,14 @@ func print(x, y int, args ...interface{}) {
 	for _, r := range s {
 		termbox.SetCell(x, y, r,
 			termbox.ColorDefault, termbox.ColorDefault)
+		x += 1
+	}
+}
+
+func FprintS(x, y int, s string, fg termbox.Attribute) {
+	for _, r := range s {
+		termbox.SetCell(x, y, r,
+			fg, termbox.ColorDefault)
 		x += 1
 	}
 }

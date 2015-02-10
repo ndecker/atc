@@ -88,11 +88,15 @@ func GameLoop(game *GameState) {
 	defer timer.Stop()
 
 	var help_visible bool = false
+	var planes_visible bool = false
 
 	for {
 		DrawGame(game)
 		if help_visible {
 			DrawHelp()
+		}
+		if planes_visible {
+			DrawPlanes(game)
 		}
 		termbox.Flush()
 
@@ -112,10 +116,15 @@ func GameLoop(game *GameState) {
 					case termbox.KeySpace,
 						termbox.KeyEnter,
 						termbox.KeyBackspace, termbox.KeyBackspace2:
-						if help_visible {
+						if help_visible || planes_visible {
 							help_visible = false
+							planes_visible = false
 						} else {
 							game.ci.Clear()
+						}
+					case termbox.KeyTab:
+						if game.setup.show_planes {
+							planes_visible = !planes_visible
 						}
 					}
 				case ',':
@@ -165,10 +174,6 @@ func main() {
 	for {
 		seed := RandSeed()
 		game := NewGame(DEFAULT_SETUP, seed)
-
-		if game.setup.show_planes_at_start {
-			ShowPlanes(game)
-		}
 
 		GameLoop(game)
 		if !WaitForContinue() {
