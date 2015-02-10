@@ -77,11 +77,15 @@ func DisplayWindow(title string, footer string, lines []string, colors []termbox
 	}
 }
 
-func DrawPlanes(game *GameState) {
+func DrawPlanes(game *GameState) bool {
 	lines := make([]string, 0, len(game.planes))
 	colors := make([]termbox.Attribute, 0, len(game.planes))
 
 	for _, p := range game.planes {
+		if !game.setup.show_pending_planes && p.state == StatePending {
+			continue
+		}
+
 		lines = append(lines, p.String())
 		switch {
 		case p.IsActive():
@@ -92,7 +96,12 @@ func DrawPlanes(game *GameState) {
 			colors = append(colors, termbox.ColorBlue)
 		}
 	}
+
+	if len(lines) == 0 {
+		return false
+	}
 	DisplayWindow("Planes", "", lines, colors)
+	return true
 }
 
 func DrawHelp(screen int) {

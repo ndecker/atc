@@ -14,7 +14,7 @@ type GameSetup struct {
 	have_heli      bool
 	have_blackbird bool
 
-	show_planes bool
+	show_pending_planes bool
 }
 
 func DefaultSetup() *GameSetup {
@@ -31,7 +31,7 @@ func DefaultSetup() *GameSetup {
 		have_heli:      true,
 		have_blackbird: true,
 
-		show_planes: true,
+		show_pending_planes: false,
 	}
 }
 

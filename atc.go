@@ -101,7 +101,7 @@ func RunGame(setup *GameSetup, board *Board, seed int64) {
 			DrawHelp(help_screen)
 		}
 		if planes_visible {
-			DrawPlanes(game)
+			planes_visible = DrawPlanes(game)
 		}
 		termbox.Flush()
 
@@ -134,7 +134,7 @@ func RunGame(setup *GameSetup, board *Board, seed int64) {
 						case termbox.KeyBackspace, termbox.KeyBackspace2:
 							game.ci.Clear()
 						case termbox.KeyTab:
-							planes_visible = game.setup.show_planes
+							planes_visible = true
 						}
 					case ',':
 						game.Tick()

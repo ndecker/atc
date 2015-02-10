@@ -19,7 +19,7 @@ var HELP []string = []string{
         Esc              quit game
         .                advance time
         ?                show help
-        Tab              show planes (if enabled)`,
+        Tab              show planes`,
 	`
       Airplanes:
         Jet (Mark: M)
