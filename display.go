@@ -24,7 +24,7 @@ func DisplayWindow(title string, footer string, lines []string, colors []termbox
 	rows := num_lines
 	for (cols+1)*max_len+cols < contw && rows > conth {
 		cols++
-		rows = (num_lines + 1) / cols
+		rows = (num_lines + cols - 1) / cols
 	}
 
 	contw = cols*max_len + (cols - 1)
