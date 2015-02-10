@@ -52,30 +52,30 @@ type Plane struct {
 	clear_to_aproach rune
 }
 
-func (p *Plane) Tick(game *GameState) {
+func (p *Plane) Tick(game *GameState) (er *EndReason) {
 	for n := 1; n <= p.typ.moves_per_tick; n += 1 {
-		p.DoTick(game)
-		if game.end_reason != nil {
-			return
+		er := p.DoTick(game)
+		if er != nil {
+			return er
 		}
 	}
+	return nil
 }
 
-func (p *Plane) DoTick(game *GameState) {
+func (p *Plane) DoTick(game *GameState) *EndReason {
 	if p.IsConsumingFuel() {
 		p.fuel_left -= 1
 		if p.fuel_left == 0 {
-			game.end_reason = &EndReason{
+			return &EndReason{
 				message: "Fuel exhausted",
 				planes:  []*Plane{p},
 			}
-			return
 		}
 	}
 
 	if p.wait_ticks > 0 {
 		p.wait_ticks -= 1
-		return
+		return nil
 	}
 
 	p.last_height = p.height
@@ -101,7 +101,10 @@ func (p *Plane) DoTick(game *GameState) {
 
 	case StateWaiting: // wait for DoHeight
 	case StateRolling: // after wait ticks
-		p.UpdatePosition(game)
+		er := p.UpdatePosition(game)
+		if er != nil {
+			return er
+		}
 		p.ApplyWants()
 
 		p.state = StateFlying
@@ -110,7 +113,10 @@ func (p *Plane) DoTick(game *GameState) {
 			p.Direction = p.Direction.Left(1)
 		}
 
-		p.UpdatePosition(game)
+		er := p.UpdatePosition(game)
+		if er != nil {
+			return er
+		}
 		p.ApplyWants()
 
 		navaid := game.board.GetNavaid(p.Position)
@@ -130,7 +136,7 @@ func (p *Plane) DoTick(game *GameState) {
 	default:
 		panic("unhandled case")
 	}
-
+	return nil
 }
 
 func (p *Plane) Collides(p2 *Plane) bool {
@@ -170,26 +176,23 @@ func (p *Plane) ApplyWants() {
 	}
 }
 
-func (p *Plane) UpdatePosition(game *GameState) {
-	var next_pos Position
+func (p *Plane) UpdatePosition(game *GameState) *EndReason {
+	next_pos := p.Position
 	if !p.is_hoovering {
 		next_pos = p.Position.Move(p.Direction, 1)
-	} else {
-		next_pos = p.Position
 	}
 
 	if !game.board.Contains(next_pos) {
 		// left the playing field
-		if p.Position != p.exit.Position || p.height != p.typ.exit_height {
-			game.end_reason = &EndReason{
+		if p.Position == p.exit.Position && p.height == p.typ.exit_height {
+			p.state = StateDeparted
+			return nil
+		} else {
+			return &EndReason{
 				message: "Boundary Error",
 				planes:  []*Plane{p},
 			}
-			return
 		}
-
-		p.state = StateDeparted
-		return
 	}
 
 	if p.state == StateAproach {
@@ -197,7 +200,7 @@ func (p *Plane) UpdatePosition(game *GameState) {
 		if ap != nil {
 			if ap == p.exit && p.height == 0 {
 				p.state = StateLanded
-				return
+				return nil
 			}
 
 			// call off landing
@@ -209,6 +212,7 @@ func (p *Plane) UpdatePosition(game *GameState) {
 		}
 	}
 	p.Position = next_pos
+	return nil
 }
 
 func (p *Plane) DoTurn(c int) bool {

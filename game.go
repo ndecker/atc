@@ -54,24 +54,28 @@ type GameState struct {
 }
 
 func (g *GameState) Tick() {
-	if g.end_reason != nil {
-		return
+	if g.end_reason == nil {
+		g.end_reason = g.doTick()
 	}
-	g.clock.Tick()
+}
 
+func (g *GameState) doTick() *EndReason {
+	g.clock.Tick()
 	if g.clock == 0 {
-		g.end_reason = &EndReason{message: "Time is up"}
+		return &EndReason{message: "Time is up"}
 	}
 
 	// TODO: update once before first tick
 	remaining := 0
 	for _, p := range g.planes {
-		p.Tick(g)
+		er := p.Tick(g)
+		if er != nil {
+			return er
+		}
 
 		if p.callsign == 0 && (p.state == StateIncoming || p.state == StateWaiting) {
 			if len(g.reusable_callsigns) == 0 {
-				g.end_reason = &EndReason{message: "Too many active planes"}
-				return
+				return &EndReason{message: "Too many active planes"}
 			}
 			p.callsign = g.reusable_callsigns[0]
 			g.reusable_callsigns = g.reusable_callsigns[1:]
@@ -96,7 +100,7 @@ func (g *GameState) Tick() {
 			}
 
 			if p1.Collides(p2) {
-				g.end_reason = &EndReason{
+				return &EndReason{
 					message: "Conflict",
 					planes:  []*Plane{p1, p2},
 				}
@@ -105,11 +109,12 @@ func (g *GameState) Tick() {
 	}
 
 	if remaining == 0 {
-		g.end_reason = &EndReason{message: "Success"}
+		return &EndReason{message: "Success"}
 	}
 
 	// apply delayed commands
 	g.ci.Tick(g)
+	return nil
 }
 
 func (g *GameState) KeyPressed(k rune) {
