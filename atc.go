@@ -77,7 +77,7 @@ func DrawGame(game *GameState) {
 	print(left+0, top+21, game.clock.String())
 	if game.end_reason != nil {
 		print(left+8, top+21, game.end_reason.message)
-		print(left+8, top+22, "(Press Esc to quit)")
+		print(left+8, top+22, "(Press Esc to quit / R to restart same game)")
 
 		for _, p := range game.end_reason.planes {
 			printPlane(p, true)
@@ -87,10 +87,12 @@ func DrawGame(game *GameState) {
 	}
 }
 
-func GameLoop(game *GameState) {
+func RunGame(setup GameSetup, seed int64) {
 	tick_time := time.Duration(SECONDS_PER_TICK) * time.Second
 	timer := time.NewTimer(tick_time)
 	defer timer.Stop()
+
+	game := NewGame(DEFAULT_SETUP, seed)
 
 	var help_visible bool = false
 	var planes_visible bool = false
@@ -140,6 +142,12 @@ func GameLoop(game *GameState) {
 					}
 				case '?':
 					help_visible = !help_visible
+				case 'R', 'r':
+					if game.end_reason != nil {
+						game = NewGame(setup, seed)
+					} else {
+						game.KeyPressed(unicode.ToUpper(ev.Ch))
+					}
 				default:
 					game.KeyPressed(unicode.ToUpper(ev.Ch))
 				}
@@ -169,8 +177,7 @@ func main() {
 		}
 	}()
 
+	setup := DEFAULT_SETUP
 	seed := RandSeed()
-	game := NewGame(DEFAULT_SETUP, seed)
-
-	GameLoop(game)
+	RunGame(setup, seed)
 }
