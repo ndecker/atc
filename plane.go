@@ -378,7 +378,7 @@ func (p Plane) StateMessage() string {
 	return res
 }
 
-func MakePlanes(setup GameSetup, board *Board, seed int64) []*Plane {
+func MakePlanes(setup *GameSetup, board *Board, seed int64) []*Plane {
 	planes := make([]*Plane, 0, setup.num_planes)
 
 	r := rand.New(rand.NewSource(seed))
@@ -391,8 +391,9 @@ func MakePlanes(setup GameSetup, board *Board, seed int64) []*Plane {
 	retry_plane: // try until valid plan found
 		for {
 			if tries > 100 {
-				panic("cannot find valid plane")
+				panic(fmt.Sprintf("cannot find valid plane (found already %d planes)", len(planes)))
 			}
+			tries++
 
 			typ := ChoosePlaneType(r, plane_types)
 			route := ChooseRoute(r, board.routes)

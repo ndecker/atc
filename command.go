@@ -69,8 +69,6 @@ func (c *Command) Apply(p *Plane) string {
 }
 
 type CommandInterpreter struct {
-	setup GameSetup
-
 	buf   string
 	last  string
 	reply string

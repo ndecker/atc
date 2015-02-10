@@ -84,12 +84,12 @@ func DrawGame(game *GameState) {
 	}
 }
 
-func RunGame(setup GameSetup, seed int64) {
+func RunGame(setup *GameSetup, board *Board, seed int64) {
 	tick_time := time.Duration(SECONDS_PER_TICK) * time.Second
 	timer := time.NewTimer(tick_time)
 	defer timer.Stop()
 
-	game := NewGame(DEFAULT_SETUP, seed)
+	game := NewGame(setup, board, seed)
 
 	var help_visible bool = false
 	var help_screen int = 0
@@ -146,7 +146,7 @@ func RunGame(setup GameSetup, seed int64) {
 						help_visible = true
 					case 'R', 'r':
 						if game.end_reason != nil {
-							game = NewGame(setup, seed)
+							game = NewGame(setup, board, seed)
 						} else {
 							game.KeyPressed(unicode.ToUpper(ev.Ch))
 						}
@@ -181,7 +181,8 @@ func main() {
 		}
 	}()
 
-	setup := DEFAULT_SETUP
+	setup := DefaultSetup()
+	board := CROSSWAYS_BOARD
 	seed := RandSeed()
-	RunGame(setup, seed)
+	RunGame(setup, board, seed)
 }

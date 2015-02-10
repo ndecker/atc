@@ -17,20 +17,22 @@ type GameSetup struct {
 	show_planes bool
 }
 
-var DEFAULT_SETUP = GameSetup{
-	duration:         25 * Minutes,
-	last_plane_start: 15 * Minutes,
-	num_planes:       30,
+func DefaultSetup() *GameSetup {
+	return &GameSetup{
+		duration:         25 * Minutes,
+		last_plane_start: 15 * Minutes,
+		num_planes:       30,
 
-	skip_to_next_tick: true,
-	delayed_commands:  true,
+		skip_to_next_tick: true,
+		delayed_commands:  true,
 
-	have_jet:       true,
-	have_prop:      true,
-	have_heli:      true,
-	have_blackbird: true,
+		have_jet:       true,
+		have_prop:      true,
+		have_heli:      true,
+		have_blackbird: true,
 
-	show_planes: true,
+		show_planes: true,
+	}
 }
 
 type EndReason struct {
@@ -39,7 +41,7 @@ type EndReason struct {
 }
 
 type GameState struct {
-	setup GameSetup
+	setup *GameSetup
 	board *Board
 
 	seed int64
@@ -143,8 +145,19 @@ func (g *GameState) String() string {
 	return res
 }
 
-func NewGame(setup GameSetup, seed int64) *GameState {
-	board := ParseBoard(DEFAULT_BOARD, DEFAULT_ROUTES)
+func NewGame(setup *GameSetup, board *Board, seed int64) *GameState {
+
+	slowest_plane_ticks := 1
+	for _, pt := range PlaneTypes(setup) {
+		slowest_plane_ticks = Max(slowest_plane_ticks, int(pt.ticks_per_move))
+	}
+
+	// allow the slowest plane to cross the board
+	setup.last_plane_start = Ticks(Max(
+		int(setup.last_plane_start),
+		board.width*slowest_plane_ticks))
+
+	planes := MakePlanes(setup, board, seed)
 
 	var game = &GameState{
 		seed:  seed,
@@ -152,9 +165,7 @@ func NewGame(setup GameSetup, seed int64) *GameState {
 		board: board,
 
 		clock:  setup.duration,
-		planes: MakePlanes(setup, board, seed),
+		planes: planes,
 	}
-	game.ci.setup = setup
-
 	return game
 }

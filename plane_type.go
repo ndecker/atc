@@ -127,7 +127,7 @@ var (
 	}
 )
 
-func PlaneTypes(setup GameSetup) []*PlaneType {
+func PlaneTypes(setup *GameSetup) []*PlaneType {
 	plane_types := make([]*PlaneType, 0, 3)
 	if setup.have_jet {
 		plane_types = append(plane_types, &PLANE_TYPE_JET)

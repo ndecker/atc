@@ -64,6 +64,10 @@ func ChooseRoute(r *rand.Rand, a []Route) Route {
 		count += e.weight
 	}
 
+	if count == 0 {
+		panic("no route to choose from")
+	}
+
 	val := r.Intn(count)
 	for _, e := range a {
 		val -= e.weight
