@@ -100,3 +100,10 @@ func SplitLines(s string) []string {
 	}
 	return lines
 }
+
+func FirstRune(s string) rune {
+	for _, r := range s {
+		return r
+	}
+	return 0
+}

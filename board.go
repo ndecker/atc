@@ -78,6 +78,10 @@ var (
         1: 4-=-SE 5-=-NE 6-=-S  7-=-N  8-=-SW  9-=-NW
         1: =-4-W  =-5-W  =-6-W  =-7-W  =-8-W   =-9-W
     `)
+
+	BOARDS []*Board = []*Board{
+		DEFAULT_BOARD, CROSSWAYS_BOARD,
+	}
 )
 
 type Board struct {

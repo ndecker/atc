@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	BORDER_H = 2
-	BORDER_V = 1
+	BORDER_H  = 2
+	BORDER_V  = 1
+	PAD_SPACE = "                                                              "
 )
 
 func DrawWindow(title string, footer string, lines []string, colors []termbox.Attribute) {
@@ -35,7 +36,7 @@ func DrawWindow(title string, footer string, lines []string, colors []termbox.At
 	}
 
 	left := Max((termw-contw-2*BORDER_H)/2, 0)
-	right := left + contw + BORDER_H
+	right := left + contw + BORDER_H + 1
 	top := Max((termh-conth-2*BORDER_V)/2, 0)
 	bottom := top + conth + BORDER_V
 
@@ -73,7 +74,7 @@ func DrawWindow(title string, footer string, lines []string, colors []termbox.At
 		printC(
 			left+(pos/rows)*(max_len+1),
 			top+(pos%rows),
-			color, line)
+			color, line, PAD_SPACE[0:max_len-len(line)])
 	}
 }
 
@@ -104,15 +105,15 @@ func DrawPlanes(game *GameState) bool {
 	return true
 }
 
-func DrawHelp(screen int) {
-	screen = screen % len(HELP)
+func DrawHelp(screen uint) {
+	screen = screen % uint(len(HELP))
 	lines := SplitLines(HELP[screen])
 	DrawWindow(
 		fmt.Sprintf("Help (page %d of %d)", screen+1, len(HELP)),
-		"Space: next page", lines, nil)
+		"<- / -> / Space", lines, nil)
 }
 
-func DialogKeys(ev termbox.Event, visible *bool, screen *int) {
+func DialogKeys(ev termbox.Event, visible *bool, screen *uint) {
 	switch ev.Ch {
 	case 0:
 		switch ev.Key {
@@ -124,6 +125,14 @@ func DialogKeys(ev termbox.Event, visible *bool, screen *int) {
 			termbox.KeyEnter:
 			if screen != nil {
 				*screen++
+			}
+		case termbox.KeyArrowRight:
+			if screen != nil {
+				*screen++
+			}
+		case termbox.KeyArrowLeft:
+			if screen != nil {
+				*screen--
 			}
 		}
 	case 'x', 'X', 'q', 'Q':

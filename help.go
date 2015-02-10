@@ -17,7 +17,7 @@ var HELP []string = []string{
         <aircraft>S      status of aircraft
 
         Esc              quit game
-        .                advance time
+        ,                advance time
         ?                show help
         Tab              show planes`,
 	`

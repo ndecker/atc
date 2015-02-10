@@ -9,10 +9,11 @@ import (
 var _ = fmt.Println
 
 type MenuEntry struct {
-	key    rune
-	text   string
-	textf  func() string
-	action func()
+	key                rune
+	text               string
+	textf              func() string
+	action             func()
+	keep_current_entry bool
 }
 
 type ECloseMenu struct{}
@@ -33,24 +34,19 @@ func RunMenu(title string, entries []MenuEntry) {
 	active_entry := 0
 menu:
 	for !close_menu {
-		lines := make([]string, 0, len(entries))
-		colors := make([]termbox.Attribute, 0, len(entries))
+		lines := make([]string, len(entries))
+		colors := make([]termbox.Attribute, len(entries))
 
 		for nr, e := range entries {
 			if e.text != "" {
-				lines = append(lines, e.text)
+				lines[nr] = e.text
 			} else if e.textf != nil {
-				lines = append(lines, e.textf())
-			} else {
-				lines = append(lines, "")
+				lines[nr] = e.textf()
 			}
-
-			if nr == active_entry {
-				colors = append(colors, termbox.ColorDefault|termbox.AttrReverse)
-			} else {
-				colors = append(colors, termbox.ColorDefault)
-			}
+			colors[nr] = termbox.ColorDefault
 		}
+
+		colors[active_entry] = colors[active_entry] | termbox.AttrReverse
 
 		termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 		DrawWindow(title, "", lines, colors)
@@ -67,7 +63,9 @@ menu:
 				for _, e := range entries {
 					if e.key == ch {
 						e.action()
-						active_entry = 0
+						if !e.keep_current_entry {
+							active_entry = 0
+						}
 						continue menu
 					}
 				}
@@ -77,9 +75,11 @@ menu:
 			switch ev.Key {
 			case termbox.KeyEsc, termbox.KeyCtrlC:
 				close_menu = true
-			case termbox.KeyEnter:
+			case termbox.KeyEnter, termbox.KeySpace:
 				entries[active_entry].action()
-				active_entry = 0
+				if !entries[active_entry].keep_current_entry {
+					active_entry = 0
+				}
 			case termbox.KeyArrowUp:
 				active_entry = (active_entry + len(entries) - 1) % len(entries)
 				for entries[active_entry].action == nil {
@@ -104,18 +104,19 @@ func CloseMenu() {
 	panic(ECloseMenu{})
 }
 
-func MenuBoolText(key rune, v *bool, textt string, textf string) MenuEntry {
+func MenuBoolText(key rune, v *bool, text string) MenuEntry {
 	return MenuEntry{
 		key: key,
 		textf: func() string {
+			mark := ' '
 			if *v {
-				return textt
-			} else {
-				return textf
+				mark = 'X'
 			}
+			return fmt.Sprintf("%-30s[%c]", text, mark)
 		},
 		action: func() {
 			*v = !*v
 		},
+		keep_current_entry: true,
 	}
 }

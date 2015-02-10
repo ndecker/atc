@@ -96,7 +96,7 @@ func RunGame(setup *GameSetup, board *Board, seed int64) {
 	game := NewGame(setup, board, seed)
 
 	var help_visible bool = false
-	var help_screen int = 0
+	var help_screen uint = 0
 	var planes_visible bool = false
 
 	for {
@@ -224,6 +224,15 @@ func main() {
 		return
 	}
 
+	board_menu := make([]MenuEntry, len(BOARDS))
+	for nr, b := range BOARDS {
+		b := b
+		board_menu[nr] = MenuEntry{key: unicode.ToUpper(FirstRune(b.name)), text: b.name, action: func() {
+			board = b
+			CloseMenu()
+		}}
+	}
+
 	RunMenu("ATC - Air Traffic Control", []MenuEntry{
 		MenuEntry{key: 'S', text: "Start", action: func() {
 			seed := RandSeed()
@@ -232,28 +241,24 @@ func main() {
 		MenuEntry{key: 'B', textf: func() string {
 			return fmt.Sprintf("Choose Board [%s]", board.name)
 		}, action: func() {
-			RunMenu("Choose Board", []MenuEntry{
-				MenuEntry{key: 'S', text: "ATC Standard", action: func() {
-					board = DEFAULT_BOARD
-					CloseMenu()
-				}},
-				MenuEntry{key: 'C', text: "Crossways", action: func() {
-					board = CROSSWAYS_BOARD
-					CloseMenu()
-				}},
-			})
+			RunMenu("Choose Board", board_menu)
 		}},
 
 		MenuEntry{},
 		MenuEntry{key: 'O', text: "Options", action: func() {
 			RunMenu("Options", []MenuEntry{
-				MenuEntry{text: "Return", action: CloseMenu},
+				MenuEntry{text: "Main Menu", action: CloseMenu},
 				MenuEntry{},
 
-				MenuBoolText('J', &setup.have_jet, "Jet enabled", "Jet disabled"),
-				MenuBoolText('P', &setup.have_prop, "Prop enabled", "Prop disabled"),
-				MenuBoolText('H', &setup.have_heli, "Heli enabled", "Prop disabled"),
-				MenuBoolText('B', &setup.have_blackbird, "Blackbird enabled", "Blackbird disabled"),
+				MenuBoolText('J', &setup.have_jet, "Jet"),
+				MenuBoolText('P', &setup.have_prop, "Prop"),
+				MenuBoolText('H', &setup.have_heli, "Heli"),
+				MenuBoolText('B', &setup.have_blackbird, "Blackbird"),
+
+				MenuEntry{},
+				MenuBoolText('S', &setup.show_pending_planes, "Show pending planes"),
+				MenuBoolText('.', &setup.delayed_commands, ". delays commands"),
+				MenuBoolText(',', &setup.skip_to_next_tick, ", skips to next tick"),
 			})
 		}},
 
