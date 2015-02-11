@@ -16,5 +16,5 @@ func (t *Ticks) Tick() {
 }
 
 func (t Ticks) String() string {
-	return fmt.Sprintf("%d:%02d", t/TICKS_PER_MINUTE, SECONDS_PER_TICK*(t%TICKS_PER_MINUTE))
+	return fmt.Sprintf("%2d:%02d", t/TICKS_PER_MINUTE, SECONDS_PER_TICK*(t%TICKS_PER_MINUTE))
 }
