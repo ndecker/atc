@@ -92,12 +92,12 @@ func DrawGame(game *GameState) {
 	}
 }
 
-func RunGame(rules *GameRules, board *Board, seed int64) {
+func RunGame(rules *GameRules, board *Board, diff *Difficulty, seed int64) {
 	tick_time := time.Duration(SECONDS_PER_TICK) * time.Second
 	timer := time.NewTimer(tick_time)
 	defer timer.Stop()
 
-	game := NewGame(rules, board, seed)
+	game := NewGame(rules, board, diff, seed)
 
 	var help_visible bool = false
 	var help_screen uint = 0
@@ -154,7 +154,7 @@ func RunGame(rules *GameRules, board *Board, seed int64) {
 						help_visible = true
 					case 'R', 'r':
 						if game.end_reason != nil {
-							game = NewGame(rules, board, seed)
+							game = NewGame(rules, board, diff, seed)
 						} else {
 							game.KeyPressed(unicode.ToUpper(ev.Ch))
 						}
@@ -181,6 +181,7 @@ func main() {
 	single_game := false
 	rules := DefaultRules()
 	board := DEFAULT_BOARD
+	diff := &board.difficulties[0]
 
 	switch len(os.Args) {
 	case 2:
@@ -189,7 +190,7 @@ func main() {
 			usage()
 			return
 		}
-		rules.duration = Ticks(time) * Minutes
+		diff.duration = Ticks(time) * Minutes
 		single_game = true
 	case 3:
 		time, err := strconv.Atoi(os.Args[1])
@@ -202,8 +203,8 @@ func main() {
 			usage()
 			return
 		}
-		rules.duration = Ticks(time) * Minutes
-		rules.num_planes = planes
+		diff.duration = Ticks(time) * Minutes
+		diff.num_planes = planes
 		single_game = true
 	}
 
@@ -224,7 +225,7 @@ func main() {
 
 	if single_game {
 		seed := RandSeed()
-		RunGame(rules, board, seed)
+		RunGame(rules, board, diff, seed)
 		return
 	}
 
@@ -240,7 +241,7 @@ func main() {
 	RunMenu("ATC - Air Traffic Control", []MenuEntry{
 		MenuEntry{key: 'S', text: "Start", action: func() {
 			seed := RandSeed()
-			RunGame(rules, board, seed)
+			RunGame(rules, board, diff, seed)
 		}},
 		MenuEntry{key: 'B', textf: func() string {
 			return fmt.Sprintf("Board %s[%s]", PAD_SPACE[0:18-len(board.name)], board.name)

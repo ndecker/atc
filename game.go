@@ -1,10 +1,13 @@
 package main
 
-type GameRules struct {
-	duration         Ticks
-	last_plane_start Ticks
-
+type Difficulty struct {
+	name       string
+	duration   Ticks
 	num_planes int
+}
+
+type GameRules struct {
+	last_plane_start Ticks
 
 	skip_to_next_tick bool // if true "," will skip to the beginning of the next tick
 	delayed_commands  bool
@@ -19,9 +22,7 @@ type GameRules struct {
 
 func ATCDefaultRules() *GameRules {
 	return &GameRules{
-		duration:         50 * Minutes,
 		last_plane_start: 15 * Minutes,
-		num_planes:       26,
 
 		skip_to_next_tick: false,
 		delayed_commands:  false,
@@ -37,9 +38,7 @@ func ATCDefaultRules() *GameRules {
 
 func DefaultRules() *GameRules {
 	return &GameRules{
-		duration:         90 * Minutes,
 		last_plane_start: 15 * Minutes,
-		num_planes:       30,
 
 		skip_to_next_tick: true,
 		delayed_commands:  true,
@@ -103,7 +102,7 @@ func (g *GameState) doTick() *EndReason {
 
 		if !p.IsDone() {
 			remaining += 1
-		} else if p.callsign != 0 && g.rules.num_planes > 26 {
+		} else if p.callsign != 0 && len(g.planes) > 26 {
 			// plane is done; reuse callsign
 			g.reusable_callsigns = append(g.reusable_callsigns, p.callsign)
 			p.callsign = 0
@@ -163,7 +162,7 @@ func (g *GameState) String() string {
 	return res
 }
 
-func NewGame(rules *GameRules, board *Board, seed int64) *GameState {
+func NewGame(rules *GameRules, board *Board, diff *Difficulty, seed int64) *GameState {
 
 	slowest_plane_ticks := 1
 	for _, pt := range PlaneTypes(rules) {
@@ -175,14 +174,14 @@ func NewGame(rules *GameRules, board *Board, seed int64) *GameState {
 		int(rules.last_plane_start),
 		board.width*slowest_plane_ticks))
 
-	planes := MakePlanes(rules, board, seed)
+	planes := MakePlanes(rules, board, diff, seed)
 
 	var game = &GameState{
 		seed:  seed,
 		rules: rules,
 		board: board,
 
-		clock:  rules.duration,
+		clock:  diff.duration,
 		planes: planes,
 	}
 	return game
