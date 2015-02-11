@@ -107,3 +107,10 @@ func FirstRune(s string) rune {
 	}
 	return 0
 }
+
+const PAD_SPACE = "                                                              "
+
+func Pad(width int, left string, right string) string {
+	pad := Max(0, width-len(left)-len(right))
+	return left + PAD_SPACE[0:pad] + right
+}

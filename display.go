@@ -6,9 +6,8 @@ import (
 )
 
 const (
-	BORDER_H  = 2
-	BORDER_V  = 1
-	PAD_SPACE = "                                                              "
+	BORDER_H = 2
+	BORDER_V = 1
 )
 
 func DrawWindow(title string, footer string, lines []string, colors []termbox.Attribute) {
@@ -31,8 +30,8 @@ func DrawWindow(title string, footer string, lines []string, colors []termbox.At
 	contw = cols*max_len + (cols - 1)
 	conth = rows
 
-	if len(title)+2 > contw || len(footer)+2 > contw {
-		contw = Max(len(title), len(footer))
+	if len(title)+4 > contw || len(footer)+4 > contw {
+		contw = Max(len(title), len(footer)) + 4
 	}
 
 	left := Max((termw-contw-2*BORDER_H)/2, 0)
@@ -74,7 +73,7 @@ func DrawWindow(title string, footer string, lines []string, colors []termbox.At
 		printC(
 			left+(pos/rows)*(max_len+1),
 			top+(pos%rows),
-			color, line, PAD_SPACE[0:max_len-len(line)])
+			color, Pad(max_len, line, ""))
 	}
 }
 

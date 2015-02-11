@@ -7,6 +7,15 @@ import (
 )
 
 var (
+	DIFFICULTIES = []*Difficulty{
+		&Difficulty{"Beginner", 80 * Minutes, 26},
+		&Difficulty{"Easy", 60 * Minutes, 26},
+		&Difficulty{"Average", 40 * Minutes, 26},
+		&Difficulty{"Hard", 30 * Minutes, 26},
+		&Difficulty{"Expert", 20 * Minutes, 26},
+		&Difficulty{"Impossible", 16 * Minutes, 26},
+	}
+
 	DEFAULT_BOARD *Board = ParseBoard("ATC Standard", `
         .....1....2.........3....
         .........................
@@ -41,9 +50,7 @@ var (
         1: =-0-W  =-1-W  =-2-W  =-3-W  =-4-W  =-5-W  =-6-W  =-7-W  =-8-W  =-9-W
         1: %-0-NW %-1-NW %-2-NW %-3-NW %-4-NW %-5-NW %-6-NW %-7-NW %-8-NW %-9-NW
         2: =-=-W  %-%-NW =-%-W %-=-NW
-    `, []Difficulty{
-		Difficulty{"normal", 50 * Minutes, 26},
-	})
+    `)
 
 	CROSSWAYS_BOARD *Board = ParseBoard("Crossways", `
         .....4.........6.........8.....
@@ -79,9 +86,7 @@ var (
         2: =-0-W  =-3-W
         1: 4-=-SE 5-=-NE 6-=-S  7-=-N  8-=-SW  9-=-NW
         1: =-4-W  =-5-W  =-6-W  =-7-W  =-8-W   =-9-W
-    `, []Difficulty{
-		Difficulty{"extreme", 90 * Minutes, 100},
-	})
+    `)
 
 	NOFLY_BOARD *Board = ParseBoard("NoFly Zone", `
         ............5....6.............
@@ -108,7 +113,7 @@ var (
     `, `
         1: 1-3-E 4-2-W
         1: 5-7-S 8-6-N
-    `, []Difficulty{})
+    `)
 
 	BOARDS []*Board = []*Board{
 		DEFAULT_BOARD, CROSSWAYS_BOARD, NOFLY_BOARD,
@@ -125,8 +130,6 @@ type Board struct {
 	navaids     []Position
 	routes      []Route
 	nofly       []Position
-
-	difficulties []Difficulty
 }
 
 func (b Board) Contains(p Position) bool {
@@ -175,14 +178,13 @@ func (r Route) String() string {
 	return fmt.Sprintf("%s-%s", string(r.entry), string(r.exit))
 }
 
-func ParseBoard(name string, s string, rs string, df []Difficulty) *Board {
+func ParseBoard(name string, s string, rs string) *Board {
 	b := &Board{
-		name:         name,
-		entrypoints:  make(map[rune]*EntryPoint),
-		navaids:      make([]Position, 0),
-		routes:       make([]Route, 0),
-		nofly:        make([]Position, 0),
-		difficulties: df,
+		name:        name,
+		entrypoints: make(map[rune]*EntryPoint),
+		navaids:     make([]Position, 0),
+		routes:      make([]Route, 0),
+		nofly:       make([]Position, 0),
 	}
 
 	lines := make([]string, 0, 40)

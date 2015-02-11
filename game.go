@@ -7,6 +7,8 @@ type Difficulty struct {
 }
 
 type GameRules struct {
+	name string
+
 	last_plane_start Ticks
 
 	skip_to_next_tick bool // if true "," will skip to the beginning of the next tick
@@ -20,8 +22,10 @@ type GameRules struct {
 	show_pending_planes bool
 }
 
-func ATCDefaultRules() *GameRules {
-	return &GameRules{
+var (
+	ATC_ORIGINAL_RULES = GameRules{
+		name: "ATC original",
+
 		last_plane_start: 15 * Minutes,
 
 		skip_to_next_tick: false,
@@ -34,10 +38,10 @@ func ATCDefaultRules() *GameRules {
 
 		show_pending_planes: false,
 	}
-}
 
-func DefaultRules() *GameRules {
-	return &GameRules{
+	DEFAULT_RULES = GameRules{
+		name: "Default",
+
 		last_plane_start: 15 * Minutes,
 
 		skip_to_next_tick: true,
@@ -50,7 +54,9 @@ func DefaultRules() *GameRules {
 
 		show_pending_planes: false,
 	}
-}
+
+	RULES = []*GameRules{&DEFAULT_RULES, &ATC_ORIGINAL_RULES}
+)
 
 type EndReason struct {
 	message string
@@ -163,7 +169,6 @@ func (g *GameState) String() string {
 }
 
 func NewGame(rules *GameRules, board *Board, diff *Difficulty, seed int64) *GameState {
-
 	slowest_plane_ticks := 1
 	for _, pt := range PlaneTypes(rules) {
 		slowest_plane_ticks = Max(slowest_plane_ticks, int(pt.ticks_per_move))

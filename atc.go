@@ -12,8 +12,7 @@ import (
 )
 
 var (
-	sigterm chan os.Signal     = make(chan os.Signal, 1)
-	events  chan termbox.Event = make(chan termbox.Event, 0)
+	events chan termbox.Event = make(chan termbox.Event, 0)
 )
 
 func DrawGame(game *GameState) {
@@ -166,56 +165,185 @@ func RunGame(rules *GameRules, board *Board, diff *Difficulty, seed int64) {
 			case termbox.EventResize:
 				// nothing; just redraw
 			}
+		}
+	}
+}
 
-		case <-sigterm:
+func MainMenu() {
+	rules := &ATC_ORIGINAL_RULES
+	board := DEFAULT_BOARD
+	diff := DIFFICULTIES[0]
+
+	active := 0
+	for {
+		menu := []string{
+			"Start Game",
+			"",
+			Pad(30, "Board", "["+board.name+"]"),
+			Pad(30, "Rules", "["+rules.name+"]"),
+			Pad(30, "Difficulty", "["+diff.name+"]"),
+			"",
+			"Options",
+			"",
+			"Quit",
+		}
+
+		res := RunMenu("ATC - Air Traffic Control", menu, active)
+		switch res {
+		case MENU_ESCAPE, 8:
+			return
+		case 0:
+			seed := RandSeed()
+			RunGame(rules, board, diff, seed)
+		case 2:
+			BoardMenu(&board)
+		case 3:
+			RulesMenu(&rules)
+		case 4:
+			DifficultyMenu(&diff)
+		case 6:
+			OptionsMenu(&rules)
+		}
+		active = res
+
+	}
+}
+
+func BoardMenu(board **Board) {
+	menu := make([]string, len(BOARDS))
+	active := 0
+	for nr, b := range BOARDS {
+		menu[nr] = b.name
+		if b == *board {
+			active = nr
+		}
+	}
+
+	for {
+		res := RunMenu("Choose Board", menu, active)
+		switch {
+		case res == MENU_ESCAPE:
+			return
+		case res >= 0:
+			*board = BOARDS[res]
 			return
 		}
 	}
 }
 
-func usage() {
-	fmt.Println("usage: atc [time [planes]]")
+func RulesMenu(rules **GameRules) {
+	menu := make([]string, len(RULES))
+	active := 0
+	for nr, r := range RULES {
+		menu[nr] = r.name
+		if r == *rules {
+			active = nr
+		}
+	}
+
+	for {
+		res := RunMenu("Select Rules", menu, active)
+		switch {
+		case res == MENU_ESCAPE:
+			return
+		case res >= 0:
+			*rules = RULES[res]
+			return
+		}
+	}
+}
+
+func DifficultyMenu(diff **Difficulty) {
+	menu := make([]string, len(DIFFICULTIES))
+	active := 0
+	for nr, d := range DIFFICULTIES {
+		menu[nr] = d.name
+		if d == *diff {
+			active = nr
+		}
+	}
+
+	for {
+		res := RunMenu("Select difficulty", menu, active)
+		switch {
+		case res == MENU_ESCAPE:
+			return
+		case res >= 0:
+			*diff = DIFFICULTIES[res]
+			return
+		}
+	}
+}
+
+func OptionsMenu(rules **GameRules) {
+	WIDTH := 25
+	active := 0
+
+	mark := func(x bool) string {
+		if x {
+			return "[X]"
+		} else {
+			return "[ ]"
+		}
+	}
+
+	r := **rules
+
+	for {
+		menu := []string{
+			"Main Menu",
+			"",
+			Pad(WIDTH, "Jet", mark(r.have_jet)),
+			Pad(WIDTH, "Prop", mark(r.have_prop)),
+			Pad(WIDTH, "Helicopter", mark(r.have_heli)),
+			Pad(WIDTH, "Blackbird", mark(r.have_blackbird)),
+			"",
+			Pad(WIDTH, "Show pending planes", mark(r.show_pending_planes)),
+			Pad(WIDTH, ". delays commands", mark(r.delayed_commands)),
+			Pad(WIDTH, ", skips to next tick", mark(r.skip_to_next_tick)),
+		}
+		res := RunMenu("Choose options", menu, active)
+		switch res {
+		case MENU_ESCAPE, 0:
+			r.name = "Custom"
+			*rules = &r
+			return
+		case 2:
+			r.have_jet = !r.have_jet
+		case 3:
+			r.have_prop = !r.have_prop
+		case 4:
+			r.have_heli = !r.have_heli
+		case 5:
+			r.have_blackbird = !r.have_blackbird
+		case 7:
+			r.show_pending_planes = !r.show_pending_planes
+		case 8:
+			r.delayed_commands = !r.delayed_commands
+		case 9:
+			r.skip_to_next_tick = !r.skip_to_next_tick
+		}
+		active = res
+	}
 }
 
 func main() {
-	single_game := false
-	rules := DefaultRules()
-	board := DEFAULT_BOARD
-	diff := &board.difficulties[0]
+	var err error
 
-	switch len(os.Args) {
-	case 2:
-		time, err := strconv.Atoi(os.Args[1])
-		if err != nil {
-			usage()
-			return
-		}
-		diff.duration = Ticks(time) * Minutes
-		single_game = true
-	case 3:
-		time, err := strconv.Atoi(os.Args[1])
-		if err != nil {
-			usage()
-			return
-		}
-		planes, err := strconv.Atoi(os.Args[2])
-		if err != nil {
-			usage()
-			return
-		}
-		diff.duration = Ticks(time) * Minutes
-		diff.num_planes = planes
-		single_game = true
-	}
-
-	signal.Notify(sigterm, syscall.SIGTERM)
-
-	err := termbox.Init()
+	err = termbox.Init()
 	if err != nil {
 		panic(err)
 	}
 	defer termbox.Close()
 	termbox.HideCursor()
+
+	sigterm := make(chan os.Signal, 1)
+	signal.Notify(sigterm, syscall.SIGTERM)
+	go func() {
+		<-sigterm
+		termbox.Close()
+		os.Exit(1)
+	}()
 
 	go func() {
 		for {
@@ -223,73 +351,36 @@ func main() {
 		}
 	}()
 
-	if single_game {
+	usage := func() {
+		termbox.Close()
+		fmt.Println("usage: atc [time [planes]]")
+		os.Exit(1)
+	}
+
+	num_planes := 26
+	switch len(os.Args) {
+	case 3:
+		num_planes, err = strconv.Atoi(os.Args[2])
+		if err != nil {
+			usage()
+		}
+		fallthrough
+	case 2:
+		time, err := strconv.Atoi(os.Args[1])
+		if err != nil {
+			usage()
+		}
+
+		time = Max(time, 16) // minimum 16 minutes
+		diff := &Difficulty{
+			duration:   Ticks(time) * Minutes,
+			num_planes: num_planes,
+		}
 		seed := RandSeed()
-		RunGame(rules, board, diff, seed)
-		return
+		RunGame(&ATC_ORIGINAL_RULES, DEFAULT_BOARD, diff, seed)
+	case 1:
+		MainMenu()
+	default:
+		usage()
 	}
-
-	board_menu := make([]MenuEntry, len(BOARDS))
-	for nr, b := range BOARDS {
-		b := b
-		board_menu[nr] = MenuEntry{key: unicode.ToUpper(FirstRune(b.name)), text: b.name, action: func() {
-			board = b
-			CloseMenu()
-		}}
-	}
-
-	RunMenu("ATC - Air Traffic Control", []MenuEntry{
-		MenuEntry{key: 'S', text: "Start", action: func() {
-			seed := RandSeed()
-			RunGame(rules, board, diff, seed)
-		}},
-		MenuEntry{key: 'B', textf: func() string {
-			return fmt.Sprintf("Board %s[%s]", PAD_SPACE[0:18-len(board.name)], board.name)
-		}, action: func() {
-			RunMenu("Choose Board", board_menu)
-		}},
-		MenuEntry{key: 'S', textf: func() string {
-			var s string = "Custom"
-			switch {
-			case *rules == *DefaultRules():
-				s = "Default"
-			case *rules == *ATCDefaultRules():
-				s = "ATC original"
-			}
-			return fmt.Sprintf("Rules %s[%s]", PAD_SPACE[0:18-len(s)], s)
-		}, action: func() {
-			RunMenu("Rules", []MenuEntry{
-				MenuEntry{key: 'D', text: "Default", action: func() {
-					rules = DefaultRules()
-					CloseMenu()
-				}},
-				MenuEntry{key: 'A', text: "ATC original", action: func() {
-					rules = ATCDefaultRules()
-					CloseMenu()
-				}},
-			})
-		}},
-
-		MenuEntry{},
-		MenuEntry{key: 'O', text: "Options", action: func() {
-			RunMenu("Options", []MenuEntry{
-				MenuEntry{text: "Main Menu", action: CloseMenu},
-				MenuEntry{},
-
-				MenuBoolText('J', &rules.have_jet, "Jet"),
-				MenuBoolText('P', &rules.have_prop, "Prop"),
-				MenuBoolText('H', &rules.have_heli, "Heli"),
-				MenuBoolText('B', &rules.have_blackbird, "Blackbird"),
-
-				MenuEntry{},
-				MenuBoolText('S', &rules.show_pending_planes, "Show pending planes"),
-				MenuBoolText('.', &rules.delayed_commands, ". delays commands"),
-				MenuBoolText(',', &rules.skip_to_next_tick, ", skips to next tick"),
-			})
-		}},
-
-		MenuEntry{},
-		MenuEntry{key: 'Q', text: "Quit", action: CloseMenu},
-	})
-
 }
