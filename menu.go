@@ -25,7 +25,6 @@ func RunMenu(title string, entries []string, active int) int {
 	}
 
 	for {
-
 		for nr, _ := range entries {
 			colors[nr] = termbox.ColorDefault
 		}
@@ -50,7 +49,7 @@ func RunMenu(title string, entries []string, active int) int {
 		}
 
 		switch ev.Key {
-		case termbox.KeyEsc, termbox.KeyCtrlC:
+		case termbox.KeyEsc:
 			return MENU_ESCAPE
 		case termbox.KeyEnter, termbox.KeySpace:
 			return active

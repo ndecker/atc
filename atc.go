@@ -121,10 +121,6 @@ func RunGame(rules *GameRules, board *Board, diff *Difficulty, seed int64) {
 			switch ev.Type {
 			case termbox.EventKey:
 				switch {
-				case ev.Ch == 0 && ev.Key == termbox.KeyCtrlC:
-					// always handle Ctrl-C
-					return
-
 				case help_visible:
 					DialogKeys(ev, &help_visible, &help_screen)
 				case planes_visible:
@@ -133,7 +129,7 @@ func RunGame(rules *GameRules, board *Board, diff *Difficulty, seed int64) {
 					switch ev.Ch {
 					case 0:
 						switch ev.Key {
-						case termbox.KeyEsc, termbox.KeyCtrlC:
+						case termbox.KeyEsc:
 							return // end game
 						case termbox.KeySpace,
 							termbox.KeyEnter:
@@ -205,7 +201,6 @@ func MainMenu() {
 			OptionsMenu(&rules)
 		}
 		active = res
-
 	}
 }
 
@@ -347,7 +342,18 @@ func main() {
 
 	go func() {
 		for {
-			events <- termbox.PollEvent()
+            ev := termbox.PollEvent()
+            if ev.Ch == 0 && ev.Key == termbox.KeyCtrlC {
+                // always terminate on Ctrl+C
+                termbox.Close()
+                os.Exit(1)
+            }
+            if ev.Type == termbox.EventError {
+                termbox.Close()
+                fmt.Println(ev)
+                os.Exit(1)
+            }
+			events <- ev
 		}
 	}()
 
