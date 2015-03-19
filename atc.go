@@ -75,7 +75,7 @@ func DrawGame(game *GameState) {
 	printPlane(game.ci.last_commanded_plane, termbox.ColorDefault)
 
 	x := left
-	y := game.board.height + 2
+	y := top + game.board.height + 1
 
 	x = print(x, y, game.clock.String(), "  ")
 	if game.end_reason != nil {
@@ -166,7 +166,7 @@ func RunGame(rules *GameRules, board *Board, diff *Difficulty, seed int64) {
 }
 
 func MainMenu() {
-	rules := &ATC_ORIGINAL_RULES
+	rules := &DEFAULT_RULES
 	board := DEFAULT_BOARD
 	diff := DIFFICULTIES[0]
 
