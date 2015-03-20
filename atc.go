@@ -192,24 +192,24 @@ func MainMenu() {
 			seed := RandSeed()
 			RunGame(rules, board, diff, seed)
 		case 2:
-			BoardMenu(&board)
+			board = BoardMenu(board)
 		case 3:
-			RulesMenu(&rules)
+			rules = RulesMenu(rules)
 		case 4:
-			DifficultyMenu(&diff)
+			diff = DifficultyMenu(diff)
 		case 6:
-			OptionsMenu(&rules)
+			rules = OptionsMenu(rules)
 		}
 		active = res
 	}
 }
 
-func BoardMenu(board **Board) {
+func BoardMenu(board *Board) *Board {
 	menu := make([]string, len(BOARDS))
 	active := 0
 	for nr, b := range BOARDS {
 		menu[nr] = b.name
-		if b == *board {
+		if b == board {
 			active = nr
 		}
 	}
@@ -218,20 +218,19 @@ func BoardMenu(board **Board) {
 		res := RunMenu("Choose Board", menu, active)
 		switch {
 		case res == MENU_ESCAPE:
-			return
+			return board
 		case res >= 0:
-			*board = BOARDS[res]
-			return
+			return BOARDS[res]
 		}
 	}
 }
 
-func RulesMenu(rules **GameRules) {
+func RulesMenu(rules *GameRules) *GameRules {
 	menu := make([]string, len(RULES))
 	active := 0
 	for nr, r := range RULES {
 		menu[nr] = r.name
-		if r == *rules {
+		if r == rules {
 			active = nr
 		}
 	}
@@ -240,20 +239,19 @@ func RulesMenu(rules **GameRules) {
 		res := RunMenu("Select Rules", menu, active)
 		switch {
 		case res == MENU_ESCAPE:
-			return
+			return rules
 		case res >= 0:
-			*rules = RULES[res]
-			return
+			return RULES[res]
 		}
 	}
 }
 
-func DifficultyMenu(diff **Difficulty) {
+func DifficultyMenu(diff *Difficulty) *Difficulty {
 	menu := make([]string, len(DIFFICULTIES))
 	active := 0
 	for nr, d := range DIFFICULTIES {
 		menu[nr] = d.name
-		if d == *diff {
+		if d == diff {
 			active = nr
 		}
 	}
@@ -262,15 +260,14 @@ func DifficultyMenu(diff **Difficulty) {
 		res := RunMenu("Select difficulty", menu, active)
 		switch {
 		case res == MENU_ESCAPE:
-			return
+			return diff
 		case res >= 0:
-			*diff = DIFFICULTIES[res]
-			return
+			return DIFFICULTIES[res]
 		}
 	}
 }
 
-func OptionsMenu(rules **GameRules) {
+func OptionsMenu(rules *GameRules) *GameRules {
 	WIDTH := 25
 	active := 0
 
@@ -282,7 +279,7 @@ func OptionsMenu(rules **GameRules) {
 		}
 	}
 
-	r := **rules
+	r := *rules
 
 	for {
 		menu := []string{
@@ -300,9 +297,12 @@ func OptionsMenu(rules **GameRules) {
 		res := RunMenu("Choose options", menu, active)
 		switch res {
 		case MENU_ESCAPE, 0:
-			r.name = "Custom"
-			*rules = &r
-			return
+			if r == *rules {
+				return rules
+			} else {
+				r.name = "Custom"
+				return &r
+			}
 		case 2:
 			r.have_jet = !r.have_jet
 		case 3:
@@ -346,13 +346,11 @@ func main() {
             if ev.Ch == 0 && ev.Key == termbox.KeyCtrlC {
                 // always terminate on Ctrl+C
                 termbox.Close()
-                os.Exit(1)
             }
-            if ev.Type == termbox.EventError {
                 termbox.Close()
                 fmt.Println(ev)
                 os.Exit(1)
-            }
+				os.Exit(1)
 			events <- ev
 		}
 	}()
