@@ -342,15 +342,17 @@ func main() {
 
 	go func() {
 		for {
-            ev := termbox.PollEvent()
-            if ev.Ch == 0 && ev.Key == termbox.KeyCtrlC {
-                // always terminate on Ctrl+C
-                termbox.Close()
-            }
-                termbox.Close()
-                fmt.Println(ev)
-                os.Exit(1)
+			ev := termbox.PollEvent()
+			if ev.Ch == 0 && ev.Key == termbox.KeyCtrlC {
+				// always terminate on Ctrl+C
+				termbox.Close()
 				os.Exit(1)
+			}
+			if ev.Type == termbox.EventError {
+				termbox.Close()
+				fmt.Println(ev)
+				os.Exit(1)
+			}
 			events <- ev
 		}
 	}()
