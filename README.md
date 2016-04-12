@@ -1,6 +1,6 @@
 # ATC Air traffic controller game
 
-![screencast](https://raw.githubusercontent.com/ndecker/atc/atc.gif)
+![screencast](https://github.com/ndecker/atc/blob/master/atc.gif)
 
 ATC is a air traffic controller game based on [ATC.exe](http://atc.fastie.com/).
 The game is described in [ATCs manual](http://atc.fastie.com/downloads/original/ATC_Users_Guide.pdf)
